@@ -119,6 +119,11 @@ class WatchFaceConfigActivity : ComponentActivity() {
         stateHolder.setColorStyle(newColorStyle.id)
     }
 
+    fun onClickUpdateLocation(view: View) {
+        Log.d(TAG, "onClickUpdateLocation() $view")
+        // TODO (jacob) get lat lon info here and update the sunrise/ sunset and moon phase
+    }
+
     fun onClickLeftComplicationButton(view: View) {
         Log.d(TAG, "onClickLeftComplicationButton() $view")
         stateHolder.setComplication(LEFT_COMPLICATION_ID)

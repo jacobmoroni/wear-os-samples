@@ -48,6 +48,7 @@
             android:layout_height="wrap_content"
             android:contentDescription="@string/activity_config_preview_of_watch_face_content_description"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.49"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -121,8 +122,8 @@
             android:id="@+id/minute_hand_length_slider"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:labelBehavior="gone"
             android:contentDescription="@string/activity_config_minute_hand_length_slider_content_description"
+            app:labelBehavior="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/slider_label" />
@@ -134,6 +135,14 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/minute_hand_length_slider" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Button"
+            app:layout_constraintTop_toBottomOf="@+id/minute_hand_length_slider"
+            tools:layout_editor_absoluteX="60dp" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
 

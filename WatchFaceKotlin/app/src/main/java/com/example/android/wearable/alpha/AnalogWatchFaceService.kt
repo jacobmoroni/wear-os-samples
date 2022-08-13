@@ -68,7 +68,7 @@ class AnalogWatchFaceService : WatchFaceService() {
 
         // Creates the watch face.
         return WatchFace(
-            watchFaceType = WatchFaceType.ANALOG,
+            watchFaceType = WatchFaceType.DIGITAL,
             renderer = renderer
         )
     }

@@ -16,10 +16,7 @@
 package com.example.android.wearable.alpha
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.Rect
+import android.graphics.*
 import android.util.Log
 import android.view.SurfaceHolder
 import androidx.core.graphics.withRotation
@@ -49,6 +46,9 @@ import java.time.Duration
 import java.time.ZonedDateTime
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.tan
+import kotlin.math.atan2
+import kotlin.math.PI
 
 // Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
@@ -238,6 +238,7 @@ class AnalogWatchCanvasRenderer(
             renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE) &&
             watchFaceData.drawHourPips
         ) {
+            drawFrame(canvas, bounds)
             drawNumberStyleOuterElement(
                 canvas,
                 bounds,
@@ -317,7 +318,6 @@ class AnalogWatchCanvasRenderer(
             withRotation(minuteRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
                 drawPath(minuteHandBorder, clockHandPaint)
             }
-
             // Draw second hand if not in ambient mode
             if (!drawAmbient) {
                 clockHandPaint.color = watchFaceColors.activeSecondaryColor
@@ -425,6 +425,71 @@ class AnalogWatchCanvasRenderer(
         return path
     }
 
+    private fun calcBezierArc(cx: Float, cy: Float, sx: Float, sy: Float, sweepAngleDeg: Float): Array<Float> {
+        val leg1x = sx - cx
+//        Log.d(TAG, "check1 leg1x: $leg1x")
+        val leg1y = sy - cy
+//        Log.d(TAG, "check1 leg1y: $leg1y")
+        val theta1 = atan2(leg1y, leg1x)
+//        Log.d(TAG, "check1 theta1: $theta1")
+        val theta2 = theta1 + sweepAngleDeg * PI / 180f
+//        Log.d(TAG, "check1 thetat2: $theta2")
+        val radius = kotlin.math.sqrt(leg1x * leg1x + leg1y * leg1y)
+//        Log.d(TAG, "check1 radius: $radius")
+        val numSegments = 360f / sweepAngleDeg
+//        Log.d(TAG, "check1 numseg: $numSegments")
+        val ctrlPtLen = radius * 4f / 3f * tan(PI / (2 * numSegments))
+//        Log.d(TAG, "check1 cpl: $ctrlPtLen")
+        val cp3x = radius * cos(theta2) + cx
+//        Log.d(TAG, "check1 cp3x: $cp3x")
+        val cp3y = radius * sin(theta2) + cy
+//        Log.d(TAG, "check1 cp3y: $cp3y")
+        val ctrlPtAngle = atan2(ctrlPtLen, radius.toDouble())
+//        Log.d(TAG, "check1 cpa: $ctrlPtAngle")
+        val lenToCtrlPt = kotlin.math.sqrt(radius * radius + ctrlPtLen * ctrlPtLen)
+//        Log.d(TAG, "check1 len: $lenToCtrlPt")
+        val cp1x = lenToCtrlPt * cos(theta1 + ctrlPtAngle) + cx
+//        Log.d(TAG, "check1 cp1x: $cp1x")
+        val cp1y = lenToCtrlPt * sin(theta1 + ctrlPtAngle) + cy
+//        Log.d(TAG, "check1 cp1y: $cp1y")
+        val cp2x = lenToCtrlPt * cos(theta2 - ctrlPtAngle) + cx
+//        Log.d(TAG, "check1 cp2: $cp2x")
+        val cp2y = lenToCtrlPt * sin(theta2 - ctrlPtAngle) + cy
+//        Log.d(TAG, "check1 cp2y: $cp2y")
+        return arrayOf<Float>(cp1x.toFloat(),
+            cp1y.toFloat(),
+            cp2x.toFloat(),
+            cp2y.toFloat(),
+            cp3x.toFloat(),
+            cp3y.toFloat())
+    }
+
+    private fun drawFrame( canvas: Canvas, bounds: Rect) {
+        val framePath = Path()
+        val size = 450f;
+        framePath.moveTo(size, .65f * size)
+        framePath.lineTo(0.93f * size, .65f * size)
+        val arrayArc1 = calcBezierArc(0.5f * size, 0.5f*size, 0.93f * size, 0.65f*size, 60f)
+        framePath.cubicTo(arrayArc1[0], arrayArc1[1],arrayArc1[2],arrayArc1[3],arrayArc1[4],arrayArc1[5])
+//        framePath.arcTo(0.05f * size,
+//            0.05f * size,
+//            0.95f * size,
+//            0.95f * size,
+//            19.5f,
+//            70.5f,
+//
+        framePath.lineTo(0.5f * size, 0.93f * size)
+        framePath.lineTo(0.5f * size, size)
+        framePath.moveTo(0.5f * size, 0.93f * size)
+        framePath.lineTo(size - arrayArc1[4], arrayArc1[5])
+        val arrayArc2 = calcBezierArc(0.5f * size, 0.5f*size, size - arrayArc1[4], arrayArc1[5], 60f)
+        framePath.cubicTo(arrayArc1[0], arrayArc1[1],arrayArc1[2],arrayArc1[3],arrayArc1[4],arrayArc1[5])
+
+
+        framePath.lineTo(0f, 0.65f * size)
+        outerElementPaint.setStyle(Paint.Style.STROKE)
+        canvas.drawPath(framePath, outerElementPaint)
+    }
     private fun drawNumberStyleOuterElement(
         canvas: Canvas,
         bounds: Rect,
@@ -450,6 +515,26 @@ class AnalogWatchCanvasRenderer(
                 textPaint
             )
         }
+        textPaint.color = watchFaceColors.activeSecondaryColor
+        canvas.drawText( "This is my fancy face", 120.0f, 120.0f, textPaint)
+        val arcBounds = RectF()
+        arcBounds.bottom = 100f;
+        arcBounds.top = 60f;
+        arcBounds.left = 100f;
+        arcBounds.right = 150f;
+        canvas.drawArc(arcBounds, 30f, 140f, true, textPaint);
+        arcBounds.left = 200f;
+        arcBounds.right = 210f;
+        canvas.drawArc(arcBounds, 30f, 140f, true, textPaint);
+
+        val tidePath = Path()
+        tidePath.moveTo(80f, 150f)
+        tidePath.cubicTo(100f, 150f, 100f, 130f, 120f, 130f)
+        tidePath.lineTo(120f, 100f)
+        tidePath.lineTo(80f, 100f)
+        tidePath.lineTo(80f, 150f)
+
+        canvas.drawPath(tidePath, textPaint)
 
         // Draws dots for the remain hour indicators between the numbers above.
         outerElementPaint.strokeWidth = outerCircleStokeWidthFraction * bounds.width()
