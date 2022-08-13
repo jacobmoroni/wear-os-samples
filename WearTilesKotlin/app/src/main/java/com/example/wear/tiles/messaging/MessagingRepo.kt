@@ -40,7 +40,7 @@ class MessagingRepo(private val context: Context) {
     suspend fun updateContacts(contacts: List<Contact>) {
         context.dataStore.edit {
             it.clear()
-            knownContacts.forEachIndexed { index, contact ->
+            contacts.forEachIndexed { index, contact ->
                 it[stringPreferencesKey("contact.$index")] = contact.toPreferenceString()
             }
             it[intPreferencesKey("contact.count")] = contacts.size
@@ -48,29 +48,47 @@ class MessagingRepo(private val context: Context) {
     }
 
     companion object {
-        val avatarPath =
+        private const val avatarPath =
             "https://github.com/android/wear-os-samples/raw/main/WearTilesKotlin/" +
                 "app/src/main/res/drawable-nodpi"
 
         val knownContacts = listOf(
             Contact(
-                id = 0, initials = "JV", name = "Jyoti V", avatarUrl = null
+                id = 0,
+                initials = "JV",
+                name = "Jyoti V",
+                avatarUrl = null
             ),
             Contact(
-                id = 1, initials = "AC", name = "Ali C", avatarUrl = "$avatarPath/ali.png"
+                id = 1,
+                initials = "AC",
+                name = "Ali C",
+                avatarUrl = "$avatarPath/ali.png"
             ),
             Contact(
-                id = 2, initials = "FS", name = "Felipe S", avatarUrl = null
+                id = 2,
+                initials = "TB",
+                name = "Taylor B",
+                avatarUrl = "$avatarPath/taylor.jpg"
             ),
             Contact(
-                id = 3, initials = "TB", name = "Taylor B", avatarUrl = "$avatarPath/taylor.jpg"
+                id = 3,
+                initials = "FS",
+                name = "Felipe S",
+                avatarUrl = null
             ),
             Contact(
-                id = 4, initials = "JG", name = "Judith G", avatarUrl = null
+                id = 4,
+                initials = "JG",
+                name = "Judith G",
+                avatarUrl = null
             ),
             Contact(
-                id = 5, initials = "AO", name = "Andrew O", avatarUrl = null
-            ),
+                id = 5,
+                initials = "AO",
+                name = "Andrew O",
+                avatarUrl = null
+            )
         )
     }
 }
