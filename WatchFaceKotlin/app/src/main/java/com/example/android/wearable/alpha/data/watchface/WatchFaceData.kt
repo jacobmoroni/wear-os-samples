@@ -75,7 +75,7 @@ data class WatchFaceData(
     val centerCircleDiameterFraction: Float = CENTER_CIRCLE_DIAMETER_FRACTION,
     val numberRadiusFraction: Float = NUMBER_RADIUS_FRACTION,
     val outerCircleStokeWidthFraction: Float = OUTER_CIRCLE_STROKE_WIDTH_FRACTION,
-    val numberStyleOuterCircleRadiusFraction: Float = NUMBER_STYLE_OUTER_CIRCLE_RADIUS_FRACTION,
+    val standardFrameWidth: Float = NUMBER_STYLE_OUTER_CIRCLE_RADIUS_FRACTION,
     val gapBetweenOuterCircleAndBorderFraction: Float =
         GAP_BETWEEN_OUTER_CIRCLE_AND_BORDER_FRACTION,
     val gapBetweenHandAndCenterFraction: Float = GAP_BETWEEN_HAND_AND_CENTER_FRACTION

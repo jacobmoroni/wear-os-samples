@@ -34,11 +34,13 @@ import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 data class WatchFaceColorPalette(
     val activePrimaryColor: Int,
     val activeSecondaryColor: Int,
+    val activeLowBatteryColor: Int,
     val activeBackgroundColor: Int,
     val activeOuterElementColor: Int,
     @DrawableRes val complicationStyleDrawableId: Int,
     val ambientPrimaryColor: Int,
     val ambientSecondaryColor: Int,
+    val ambientLowBatteryColor: Int,
     val ambientBackgroundColor: Int,
     val ambientOuterElementColor: Int
 ) {
@@ -55,6 +57,7 @@ data class WatchFaceColorPalette(
                 // Active colors
                 activePrimaryColor = context.getColor(activeColorStyle.primaryColorId),
                 activeSecondaryColor = context.getColor(activeColorStyle.secondaryColorId),
+                activeLowBatteryColor = context.getColor(activeColorStyle.lowBatteryColorId),
                 activeBackgroundColor = context.getColor(activeColorStyle.backgroundColorId),
                 activeOuterElementColor = context.getColor(activeColorStyle.outerElementColorId),
                 // Complication color style
@@ -62,6 +65,7 @@ data class WatchFaceColorPalette(
                 // Ambient colors
                 ambientPrimaryColor = context.getColor(ambientColorStyle.primaryColorId),
                 ambientSecondaryColor = context.getColor(ambientColorStyle.secondaryColorId),
+                ambientLowBatteryColor = context.getColor(ambientColorStyle.lowBatteryColorId),
                 ambientBackgroundColor = context.getColor(ambientColorStyle.backgroundColorId),
                 ambientOuterElementColor = context.getColor(ambientColorStyle.outerElementColorId)
             )
