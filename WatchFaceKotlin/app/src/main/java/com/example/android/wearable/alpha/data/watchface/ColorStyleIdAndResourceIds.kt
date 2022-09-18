@@ -63,10 +63,11 @@ enum class ColorStyleIdAndResourceIds(
     @DrawableRes val iconResourceId: Int,
     @DrawableRes val complicationStyleDrawableId: Int,
     @ColorRes val primaryColorId: Int,
-    @ColorRes val secondaryColorId: Int,
+    @ColorRes val frameColorId: Int,
+    @ColorRes val gridColorId: Int,
+    @ColorRes val tideColorId: Int,
     @ColorRes val lowBatteryColorId: Int,
-    @ColorRes val backgroundColorId: Int,
-    @ColorRes val outerElementColorId: Int
+    @ColorRes val backgroundColorId: Int
 ) {
     AMBIENT(
         id = AMBIENT_COLOR_STYLE_ID,
@@ -74,10 +75,11 @@ enum class ColorStyleIdAndResourceIds(
         iconResourceId = AMBIENT_COLOR_STYLE_ICON_ID,
         complicationStyleDrawableId = R.drawable.complication_white_style,
         primaryColorId = R.color.ambient_primary_color,
-        secondaryColorId = R.color.ambient_secondary_color,
+        frameColorId = R.color.ambient_frame_color,
+        gridColorId = R.color.ambient_grid_color,
+        tideColorId = R.color.ambient_tide_color,
         lowBatteryColorId = R.color.ambient_low_battery_color,
-        backgroundColorId = R.color.ambient_background_color,
-        outerElementColorId = R.color.ambient_outer_element_color
+        backgroundColorId = R.color.ambient_background_color
     ),
 
     RED(
@@ -86,10 +88,11 @@ enum class ColorStyleIdAndResourceIds(
         iconResourceId = RED_COLOR_STYLE_ICON_ID,
         complicationStyleDrawableId = R.drawable.complication_red_style,
         primaryColorId = R.color.red_primary_color,
-        secondaryColorId = R.color.red_secondary_color,
+        frameColorId = R.color.red_frame_color,
+        gridColorId = R.color.red_grid_color,
+        tideColorId = R.color.red_tide_color,
         lowBatteryColorId = R.color.red_low_battery_color,
-        backgroundColorId = R.color.red_background_color,
-        outerElementColorId = R.color.red_outer_element_color
+        backgroundColorId = R.color.red_background_color
     ),
 
     GREEN(
@@ -98,10 +101,11 @@ enum class ColorStyleIdAndResourceIds(
         iconResourceId = GREEN_COLOR_STYLE_ICON_ID,
         complicationStyleDrawableId = R.drawable.complication_green_style,
         primaryColorId = R.color.green_primary_color,
-        secondaryColorId = R.color.green_secondary_color,
+        frameColorId = R.color.green_frame_color,
+        gridColorId = R.color.green_grid_color,
+        tideColorId = R.color.green_tide_color,
         lowBatteryColorId = R.color.green_low_battery_color,
-        backgroundColorId = R.color.green_background_color,
-        outerElementColorId = R.color.green_outer_element_color
+        backgroundColorId = R.color.green_background_color
     ),
 
     BLUE(
@@ -110,10 +114,11 @@ enum class ColorStyleIdAndResourceIds(
         iconResourceId = BLUE_COLOR_STYLE_ICON_ID,
         complicationStyleDrawableId = R.drawable.complication_blue_style,
         primaryColorId = R.color.blue_primary_color,
-        secondaryColorId = R.color.blue_secondary_color,
+        frameColorId = R.color.blue_frame_color,
+        gridColorId = R.color.blue_grid_color,
+        tideColorId = R.color.blue_tide_color,
         lowBatteryColorId = R.color.blue_low_battery_color,
-        backgroundColorId = R.color.blue_background_color,
-        outerElementColorId = R.color.blue_outer_element_color
+        backgroundColorId = R.color.blue_background_color
     ),
 
     WHITE(
@@ -122,10 +127,11 @@ enum class ColorStyleIdAndResourceIds(
         iconResourceId = WHITE_COLOR_STYLE_ICON_ID,
         complicationStyleDrawableId = R.drawable.complication_white_style,
         primaryColorId = R.color.white_primary_color,
-        secondaryColorId = R.color.white_secondary_color,
+        frameColorId = R.color.white_frame_color,
+        gridColorId = R.color.white_grid_color,
+        tideColorId = R.color.white_tide_color,
         lowBatteryColorId = R.color.white_low_battery_color,
-        backgroundColorId = R.color.white_background_color,
-        outerElementColorId = R.color.white_outer_element_color
+        backgroundColorId = R.color.white_background_color
     );
 
     companion object {

@@ -33,16 +33,18 @@ import androidx.wear.watchface.complications.rendering.ComplicationDrawable
  */
 data class WatchFaceColorPalette(
     val activePrimaryColor: Int,
-    val activeSecondaryColor: Int,
+    val activeFrameColor: Int,
+    val activeGridColor: Int,
+    val activeTideColor: Int,
     val activeLowBatteryColor: Int,
     val activeBackgroundColor: Int,
-    val activeOuterElementColor: Int,
     @DrawableRes val complicationStyleDrawableId: Int,
     val ambientPrimaryColor: Int,
-    val ambientSecondaryColor: Int,
+    val ambientFrameColor: Int,
+    val ambientGridColor: Int,
+    val ambientTideColor: Int,
     val ambientLowBatteryColor: Int,
-    val ambientBackgroundColor: Int,
-    val ambientOuterElementColor: Int
+    val ambientBackgroundColor: Int
 ) {
     companion object {
         /**
@@ -56,18 +58,20 @@ data class WatchFaceColorPalette(
             return WatchFaceColorPalette(
                 // Active colors
                 activePrimaryColor = context.getColor(activeColorStyle.primaryColorId),
-                activeSecondaryColor = context.getColor(activeColorStyle.secondaryColorId),
+                activeFrameColor = context.getColor(activeColorStyle.frameColorId),
+                activeGridColor = context.getColor(activeColorStyle.gridColorId),
+                activeTideColor = context.getColor(activeColorStyle.tideColorId),
                 activeLowBatteryColor = context.getColor(activeColorStyle.lowBatteryColorId),
                 activeBackgroundColor = context.getColor(activeColorStyle.backgroundColorId),
-                activeOuterElementColor = context.getColor(activeColorStyle.outerElementColorId),
                 // Complication color style
                 complicationStyleDrawableId = activeColorStyle.complicationStyleDrawableId,
                 // Ambient colors
                 ambientPrimaryColor = context.getColor(ambientColorStyle.primaryColorId),
-                ambientSecondaryColor = context.getColor(ambientColorStyle.secondaryColorId),
+                ambientFrameColor = context.getColor(ambientColorStyle.frameColorId),
+                ambientGridColor = context.getColor(ambientColorStyle.gridColorId),
+                ambientTideColor = context.getColor(ambientColorStyle.tideColorId),
                 ambientLowBatteryColor = context.getColor(ambientColorStyle.lowBatteryColorId),
-                ambientBackgroundColor = context.getColor(ambientColorStyle.backgroundColorId),
-                ambientOuterElementColor = context.getColor(ambientColorStyle.outerElementColorId)
+                ambientBackgroundColor = context.getColor(ambientColorStyle.backgroundColorId)
             )
         }
     }

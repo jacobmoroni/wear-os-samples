@@ -25,38 +25,43 @@
     <!-- Style colors (based on custom colors below). -->
     <!-- Ambient Style (used when wearable in ambient mode. -->
     <color name="ambient_primary_color">@color/white</color>
-    <color name="ambient_secondary_color">@color/white_50</color>
+    <color name="ambient_frame_color">@color/white_90</color>
+    <color name="ambient_grid_color">@color/white_30</color>
+    <color name="ambient_tide_color">@color/dark_teal</color>
     <color name="ambient_low_battery_color">@color/white_30</color>
     <color name="ambient_background_color">@color/black</color>
-    <color name="ambient_outer_element_color">@color/white_30</color>
 
     <!-- Red Style -->
     <color name="red_primary_color">@color/maroon_light</color>
-    <color name="red_secondary_color">@color/maroon_50</color>
+    <color name="red_frame_color">@color/maroon_50</color>
+    <color name="red_grid_color">@color/maroon_30</color>
+    <color name="red_tide_color">@color/dark_green</color>
     <color name="red_low_battery_color">@color/red</color>
     <color name="red_background_color">@color/dark_gray</color>
-    <color name="red_outer_element_color">@color/maroon_30</color>
 
     <!-- Green Style -->
     <color name="green_primary_color">@color/light_green</color>
-    <color name="green_secondary_color">@color/dark_green</color>
+    <color name="green_frame_color">@color/dark_green</color>
+    <color name="green_grid_color">@color/light_green_30</color>
+    <color name="green_tide_color">@color/red</color>
     <color name="green_low_battery_color">@color/red</color>
-    <color name="green_background_color">@color/dark_gray</color>
-    <color name="green_outer_element_color">@color/light_green</color>
+    <color name="green_background_color">@color/black</color>
 
     <!-- Blue Style -->
     <color name="blue_primary_color">@color/light_blue</color>
-    <color name="blue_secondary_color">@color/dark_blue</color>
+    <color name="blue_frame_color">@color/light_blue</color>
+    <color name="blue_grid_color">@color/dark_blue</color>
+    <color name="blue_tide_color">@color/orange</color>
     <color name="blue_low_battery_color">@color/red</color>
-    <color name="blue_background_color">@color/dark_gray</color>
-    <color name="blue_outer_element_color">@color/light_blue</color>
+    <color name="blue_background_color">@color/black</color>
 
     <!-- White Style -->
-    <color name="white_primary_color">@color/white_70</color>
-    <color name="white_secondary_color">@color/white_50</color>
+    <color name="white_primary_color">@color/white</color>
+    <color name="white_frame_color">@color/white_90</color>
+    <color name="white_grid_color">@color/white_30</color>
+    <color name="white_tide_color">@color/med_teal</color>
     <color name="white_low_battery_color">@color/red</color>
-    <color name="white_background_color">@color/dark_gray</color>
-    <color name="white_outer_element_color">@color/white_70</color>
+    <color name="white_background_color">@color/black</color>
 
     <!-- custom colors. -->
     <color name="transparent">#00000000</color>
@@ -81,6 +86,9 @@
     <color name="light_blue_50">#804FC3F7</color>
     <color name="light_blue_60">#964FC3F7</color>
     <color name="light_blue_70">#B34FC3F7</color>
+    <color name="light_teal">#03FDFC</color>
+    <color name="med_teal">#00D8D8</color>
+    <color name="dark_teal">#007F80</color>
     <color name="gray">#424242</color>
     <color name="gray_30">#4D424242</color>
     <color name="gray_40">#64424242</color>
@@ -99,6 +107,7 @@
     <color name="gray_white">#EEEEEE</color>
     <color name="dark_pink">#F50057</color>
     <color name="red">#FF0000</color>
+    <color name="orange">#FF8303</color>
     <color name="dark_blue">#1565C0</color>
 </resources>
 

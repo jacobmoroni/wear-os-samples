@@ -33,8 +33,8 @@ import com.example.android.wearable.alpha.R
 // Creates bounds for the locations of both right and left complications. (This is the
 // location from 0.0 - 1.0.)
 // Both left and right complications use the same top and bottom bounds.
-private const val LEFT_AND_RIGHT_COMPLICATIONS_TOP_BOUND = 0.4f
-private const val LEFT_AND_RIGHT_COMPLICATIONS_BOTTOM_BOUND = 0.6f
+private const val LEFT_AND_RIGHT_COMPLICATIONS_TOP_BOUND = 0.45f
+private const val LEFT_AND_RIGHT_COMPLICATIONS_BOTTOM_BOUND = 0.65f
 
 private const val LEFT_COMPLICATION_LEFT_BOUND = 0.2f
 private const val LEFT_COMPLICATION_RIGHT_BOUND = 0.4f
