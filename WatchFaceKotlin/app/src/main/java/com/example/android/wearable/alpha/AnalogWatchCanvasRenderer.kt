@@ -18,12 +18,11 @@ package com.example.android.wearable.alpha
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.AssetManager
 import android.graphics.*
 import android.os.BatteryManager
 import android.util.Log
 import android.view.SurfaceHolder
-import androidx.core.graphics.withRotation
-import androidx.core.graphics.withScale
 import androidx.wear.watchface.ComplicationSlotsManager
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.Renderer
@@ -40,14 +39,40 @@ import com.example.android.wearable.alpha.data.watchface.WatchFaceData
 import com.example.android.wearable.alpha.utils.COLOR_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.DRAW_HOUR_PIPS_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.WATCH_HAND_LENGTH_STYLE_SETTING
+import java.lang.Exception
 import java.time.Duration
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 import kotlin.math.*
 import kotlinx.coroutines.*
 
 // Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
+
+class TideRenderArea() {
+    var lowerLeftPx = floatArrayOf(0f, 0f)
+    var upperRightPx = floatArrayOf(0f, 0f)
+    var minHour = 0f
+    var maxHour = 0f
+    var minTide = 0f
+    var maxTide = 0f
+    var numHours = 0f
+    var hourUnit = 0f
+    var time0px = 0f
+    var numFeet = 0f
+    var footUnit = 0f
+    var tide0px = 0f
+    fun updateValues() {
+        numHours = maxHour - minHour
+        hourUnit = (upperRightPx[0] - lowerLeftPx[0]) / (numHours - 1)
+        time0px = lowerLeftPx[0] - minHour * hourUnit
+        numFeet = maxTide - minTide
+        footUnit = (upperRightPx[1] - lowerLeftPx[1]) / numFeet
+        tide0px = lowerLeftPx[1] - minTide * footUnit
+    }
+}
 
 /**
  * Renders watch face via data in Room database. Also, updates watch face state based on setting
@@ -110,6 +135,11 @@ class AnalogWatchCanvasRenderer(
     // valid dimensions from the system.
     private var currentWatchFaceSize = Rect(0, 0, 0, 0)
     private var size = 0f // Width of the watch face
+    private var prevZdt: ZonedDateTime = ZonedDateTime.now();
+    private val tideList = Vector<Pair<ZonedDateTime, Pair<Float, Boolean>>>()
+    private var activeTides = arrayOfNulls<Pair<Float, Pair<Float, Boolean>>>(6)
+    private var nextTideIdx = 0
+    private var initialized = false
 
     init {
         scope.launch {
@@ -186,14 +216,14 @@ class AnalogWatchCanvasRenderer(
             // Applies the user chosen complication color scheme changes. ComplicationDrawables for
             // each of the styles are defined in XML so we need to replace the complication's
             // drawables.
-//            for ((_, complication) in complicationSlotsManager.complicationSlots) {
-//                ComplicationDrawable.getDrawable(
-//                    context,
-//                    watchFaceColors.complicationStyleDrawableId
-//                )?.let {
-//                    (complication.renderer as CanvasComplicationDrawable).drawable = it
-//                }
-//            }
+            for ((_, complication) in complicationSlotsManager.complicationSlots) {
+                ComplicationDrawable.getDrawable(
+                    context,
+                    watchFaceColors.complicationStyleDrawableId
+                )?.let {
+                    (complication.renderer as CanvasComplicationDrawable).drawable = it
+                }
+            }
         }
     }
 
@@ -219,54 +249,123 @@ class AnalogWatchCanvasRenderer(
         } else {
             watchFaceColors.activeBackgroundColor
         }
+        if (!initialized) {
+            parseTides()
+            nextTideIdx = findNextTide(zonedDateTime)
+            updateActiveTides(zonedDateTime)
+            initialized = true
+        }
         // TODO: Pull out all calculations and only run them when necessary
-        canvas.drawColor(backgroundColor)
         updateSize(bounds)
+        canvas.drawColor(backgroundColor)
 
-        // CanvasComplicationDrawable already obeys rendererParameters.
-//        drawComplications(canvas, zonedDateTime)
+        // This is to try to save battery by rendering less. Not sure if I can get it working
+//        if (zonedDateTime.second != prevZdt.second) {
+//
+//        }
+        if (zonedDateTime.minute != prevZdt.minute) {
+            if (!Duration.between(zonedDateTime, tideList[nextTideIdx].first).isNegative) {
+                nextTideIdx = findNextTide(zonedDateTime)
+            }
+            updateActiveTides(zonedDateTime)
+        }
+        prevZdt = zonedDateTime
+
+
         drawTime(canvas, zonedDateTime)
         drawDayAndDate(canvas, zonedDateTime)
-//        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) {
-//            drawClockHands(canvas, bounds, zonedDateTime)
-//        }
 
         if (renderParameters.drawMode == DrawMode.INTERACTIVE &&
             renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)
         ) {
             //Tide Grid
-            val lowerLeftPx = floatArrayOf(0f, 0.3f * size)
-            val upperRightPx = floatArrayOf(0.8f * size, 0.1f * size)
-            val minHour = -4f
-            val maxHour = 16f
-            val minTide = -2f
-            val maxTide = 6f
-            tidePaint.strokeWidth = watchFaceData.standardFrameWidth * size / 2
-            drawGrid(canvas, lowerLeftPx, upperRightPx, minHour, maxHour, minTide, maxTide)
+            val tideArea = TideRenderArea()
+            tideArea.lowerLeftPx = floatArrayOf(0f, 0.3f * size)
+            tideArea.upperRightPx = floatArrayOf(0.8f * size, 0.1f * size)
+            tideArea.minHour = -4f
+            tideArea.maxHour = 16f
+            tideArea.minTide = -2f
+            tideArea.maxTide = 6f
+            tideArea.updateValues()
+            drawGrid(canvas, tideArea)
             val lat = 40.297119f
             val lon = -111.695007f
             val sunriseTime = calculateSunriseAndSunset(zonedDateTime, lat, lon, true)
             val sunsetTime = calculateSunriseAndSunset(zonedDateTime, lat, lon, false)
             val moonPhase = calculateMoonPhase(zonedDateTime)
             drawSunriseAndSunsetTime(canvas, sunriseTime, sunsetTime)
-            drawBatteryPercent(canvas)
-            drawStepCount(canvas)
+            //            drawBatteryPercent(canvas)
+            //            drawStepCount(canvas)
+            drawDaylightBlock(canvas, zonedDateTime, tideArea, sunriseTime, sunsetTime)
+            drawTides(canvas, tideArea)
+            drawTideAxes(canvas, tideArea)
             drawMoonFrame(canvas)
             drawMoonPhase(canvas, moonPhase)
             drawFrame(canvas)
             drawLogos(canvas)
+            drawComplications(canvas, zonedDateTime)
+        }
 
-//            drawNumberStyleOuterElement(
-//                canvas,
-//                bounds,
-//                watchFaceData.numberRadiusFraction,
-//                watchFaceData.standardFrameWidth,
-//                watchFaceColors.activeOuterElementColor,
-//                watchFaceData.standardFrameWidth,
-//                watchFaceData.gapBetweenOuterCircleAndBorderFraction
-//            )
+    }
+
+    private fun AssetManager.readFile(fileName: String) = open(fileName)
+        .bufferedReader()
+        .use { it.readText() }
+
+    private fun parseTides() {
+        try {
+            val fileName = "tides_2022_npb.txt"
+            val fileContent = context.assets.readFile(fileName)
+            val lines = fileContent.split("\n")
+            for (i in 20 until lines.size-1) {
+                val line = lines[i].split(" ", "\t")
+                // [Date, Day, time, height_ft, , height_cm, , , H/L]
+                val date = line[0].split("/")
+                val time = line[2].split(":")
+                val timestamp: ZonedDateTime = ZonedDateTime.of(date[0].toInt(),
+                                                                date[1].toInt(),
+                                                                date[2].toInt(),
+                                                                time[0].toInt(),
+                                                                time[1].toInt(),
+                                                                0,
+                                                                0,
+                                                                ZoneId.of("UTC"))
+                val tide: Float = line[3].toFloat()
+                val highLow: Boolean = line[8] == "H"
+                tideList.add(Pair(timestamp, Pair(tide, highLow)))
+            }
+            Log.d("this", "tides:loaded ${tideList[tideList.size-1]}")
+        } catch (e: Exception) {
+            Log.d("this", "tides loading exception: $e")
         }
     }
+
+    private fun findNextTide(zdt: ZonedDateTime): Int {
+        for (i in 0 until tideList.size) {
+            if (!Duration.between(zdt, tideList[i].first).isNegative) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    private fun updateActiveTides(zdt: ZonedDateTime) {
+        if (nextTideIdx == -1){
+            for (i in 0 .. 5){
+                val tideEntry = Pair(0f, Pair(1f, false))
+                activeTides[i] = tideEntry
+            }
+        } else {
+            for (i in 0 .. 5){
+                val tideIdx = nextTideIdx + i - 2
+                val time = Duration.between(zdt, tideList[tideIdx].first).seconds.toFloat()/3600f
+                Log.d("this", "tides: $i: time: $time: entry: ${tideList[tideIdx]}")
+                val tideEntry : Pair<Float, Pair<Float, Boolean>> = Pair(time, tideList[tideIdx].second)
+                activeTides[i] = tideEntry
+            }
+        }
+    }
+
 
     // All calculations
     private fun updateSize(bounds: Rect) {
@@ -443,18 +542,87 @@ class AnalogWatchCanvasRenderer(
     }
 
     // ----- All drawing functions -----
-//    private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
-//        for ((_, complication) in complicationSlotsManager.complicationSlots) {
-//            if (complication.enabled) {
-//                Log.d("this", complication.complicationData.value.toString())
-////                Log.d("this", complication.)
-////                canvas.drawText(complication.complicationData.value.toString(), -1.8f * 460f, 0.8f * 460, textPaint)
-////                complication.render(canvas, zonedDateTime, renderParameters)
-//            }
-//        }
-//    }
+    private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
+        for ((_, complication) in complicationSlotsManager.complicationSlots) {
+            if (complication.enabled) {
+                complication.render(canvas, zonedDateTime, renderParameters)
+            }
+        }
+    }
 
+    private fun drawDaylightBlock(canvas: Canvas,
+                                  zdt: ZonedDateTime,
+                                  tA: TideRenderArea,
+                                  sunriseTime: Float,
+                                  sunsetTime: Float) {
+        //draw daylight rectangle
+        val daylightHours = (sunsetTime - sunriseTime + 24f).mod(24f);
+        val sunriseDiff = (zdt.hour.toFloat() + zdt.minute.toFloat() / 60.0f) - sunriseTime
+        tidePaint.strokeCap = Paint.Cap.SQUARE
+        tidePaint.color = watchFaceColors.activeDaylightColor
+        tidePaint.alpha = 120
+        val daylightBox = RectF()
+        daylightBox.bottom = tA.lowerLeftPx[1]
+        daylightBox.left = tA.time0px - sunriseDiff * tA.hourUnit
+        daylightBox.top = tA.upperRightPx[1]
+        daylightBox.right = tA.time0px + daylightBox.left + daylightHours * tA.hourUnit
 
+        val nextDaylightBox = RectF()
+        nextDaylightBox.bottom = tA.lowerLeftPx[1]
+        nextDaylightBox.left = tA.time0px - (sunriseDiff - 24) * tA.hourUnit
+        nextDaylightBox.top = tA.upperRightPx[1]
+        nextDaylightBox.right = tA.time0px + nextDaylightBox.left + daylightHours * tA.hourUnit
+
+        canvas.drawRect(daylightBox, tidePaint)
+        canvas.drawRect(nextDaylightBox, tidePaint)
+    }
+
+    private fun drawTides(canvas: Canvas, tA: TideRenderArea) {
+
+        //draw tide grid
+        tidePaint.color = watchFaceColors.activeTideColor
+        tidePaint.alpha = 255
+        tidePaint.style = Paint.Style.FILL
+
+        val tidePath = Path()
+        //draw tide
+        try{
+            tidePath.moveTo(tA.lowerLeftPx[0], tA.tide0px)
+            tidePath.lineTo(tA.time0px + activeTides[0]!!.first * tA.hourUnit,
+                            tA.tide0px - activeTides[0]!!.second.first * tA.footUnit)
+            for (i in 0 until 5) {
+                tidePath.cubicTo(tA.time0px + (activeTides[i]!!.first + activeTides[i + 1]!!.first) / 2 * tA.hourUnit,
+                                 tA.tide0px + (activeTides[i]!!.second.first * tA.footUnit),
+                                 tA.time0px + (activeTides[i]!!.first + activeTides[i + 1]!!.first) / 2 * tA.hourUnit,
+                                 tA.tide0px + (activeTides[i + 1]!!.second.first * tA.footUnit),
+                                 tA.time0px + (activeTides[i + 1]!!.first * tA.hourUnit),
+                                 tA.tide0px + (activeTides[i + 1]!!.second.first * tA.footUnit))
+            }
+            tidePath.lineTo(tA.upperRightPx[0], tA.tide0px)
+            tidePath.close()
+            canvas.drawPath(tidePath, tidePaint)
+
+        } catch (e : Exception){
+            Log.d("this", "tide exception: $e")
+        }
+//        // clean up tide overhang
+//        cairo_set_source_rgb(ad->cairo, 0, 0, 0);
+//        cairo_rectangle(ad->cairo, 0, 0, l_point, min_y+5);
+//        cairo_fill(ad->cairo);
+//        cairo_set_source_rgb(ad->cairo, 0, 0, 0);
+//        cairo_rectangle(ad->cairo, r_point+2, 0, 360, min_y+5);
+//        cairo_fill(ad->cairo);
+    }
+
+    private fun drawTideAxes(canvas: Canvas, tA: TideRenderArea){
+        val tideAxesPath = Path()
+        primaryPaint.strokeWidth = watchFaceData.standardFrameWidth * size
+        tideAxesPath.moveTo(tA.time0px, tA.lowerLeftPx[1])
+        tideAxesPath.lineTo(tA.time0px, tA.upperRightPx[1])
+        tideAxesPath.moveTo(tA.lowerLeftPx[0], tA.tide0px)
+        tideAxesPath.lineTo(tA.upperRightPx[0], tA.tide0px)
+        canvas.drawPath(tideAxesPath, primaryPaint)
+    }
 
     private fun drawMoonFrame(canvas: Canvas) {
         val moonFrameBackground = Path()
@@ -504,6 +672,7 @@ class AnalogWatchCanvasRenderer(
             moonPhasePath.cubicTo(curveX, curveY2,
                                   curveX, curveY1, moonCx, moonCy + moonR);
         }
+        primaryPaint.color = (watchFaceColors.activePrimaryColor)
         canvas.drawPath(moonPhasePath, primaryPaint)
     }
 
@@ -699,17 +868,32 @@ class AnalogWatchCanvasRenderer(
         }
         textPaint.textSize = .28f * size
         val hourMinuteFormatter = DateTimeFormatter.ofPattern("hh:mm")
-        val secondFormatter = DateTimeFormatter.ofPattern("ss")
-        val amPmFormatter = DateTimeFormatter.ofPattern("a")
         val hourMinuteString = zonedDateTime.format(hourMinuteFormatter)
-        val secondString = zonedDateTime.format(secondFormatter)
-        val amPmString = zonedDateTime.format(amPmFormatter)
         canvas.drawText(hourMinuteString, 0.03f * size, 0.63f * size, textPaint)
-        textPaint.textSize = .14f * size
-        textPaint
-        canvas.drawText(secondString, 0.75f * size, 0.63f * size, textPaint)
+        val amPmFormatter = DateTimeFormatter.ofPattern("a")
+        val amPmString = zonedDateTime.format(amPmFormatter)
         textPaint.textSize = .07f * size
         canvas.drawText(amPmString, 0.775f * size, 0.51f * size, textPaint)
+        if (!drawAmbient) {
+            drawSeconds(canvas, zonedDateTime, false);
+        }
+    }
+
+    private fun drawSeconds(canvas: Canvas, zonedDateTime: ZonedDateTime, blitSecond: Boolean) {
+        textPaint.textSize = .14f * size
+        val left = 0.75f * size
+        val bottom = 0.63f * size
+        if (blitSecond) {
+            primaryPaint.color = watchFaceColors.activeBackgroundColor
+            primaryPaint.style = Paint.Style.FILL
+            val secondBlit =
+                RectF(left, bottom - 0.11f * size, left + 0.17f * size, bottom + 0.01f * size)
+            canvas.drawRect(secondBlit, primaryPaint)
+            primaryPaint.color = watchFaceColors.activePrimaryColor
+        }
+        val secondFormatter = DateTimeFormatter.ofPattern("ss")
+        val secondString = zonedDateTime.format(secondFormatter)
+        canvas.drawText(secondString, left, bottom, textPaint)
     }
 
     // TODO: This may be helpful for showing how to integrate User defined variables
@@ -962,27 +1146,16 @@ class AnalogWatchCanvasRenderer(
     }
 
     private fun drawGrid(canvas: Canvas,
-                         lowerLeftPx: FloatArray,
-                         upperRightPx: FloatArray,
-                         minHour: Float,
-                         maxHour: Float,
-                         minTide: Float,
-                         maxTide: Float) {
+                         tA: TideRenderArea) {
         val gridPath = Path()
-        val numHours = maxHour - minHour
-        val hourUnit = (upperRightPx[0] - lowerLeftPx[0]) / (numHours - 1)
-        val time0px = lowerLeftPx[0] + maxHour * hourUnit
-        val numFeet = maxTide - minTide
-        val footUnit = (upperRightPx[1] - lowerLeftPx[1]) / numFeet
-        val tide0px = upperRightPx[1] + minTide * footUnit
 
-        for (i in 0 until numFeet.toInt() + 1) {
-            gridPath.moveTo(lowerLeftPx[0], tide0px - footUnit * (i + minTide))
-            gridPath.lineTo(upperRightPx[0], tide0px - footUnit * (i + minTide))
+        for (i in 0 until tA.numFeet.toInt() + 1) {
+            gridPath.moveTo(tA.lowerLeftPx[0], tA.tide0px + tA.footUnit * (i + tA.minTide))
+            gridPath.lineTo(tA.upperRightPx[0], tA.tide0px + tA.footUnit * (i + tA.minTide))
         }
-        for (i in 0 until numHours.toInt()) {
-            gridPath.moveTo(lowerLeftPx[0] + i * hourUnit, lowerLeftPx[1])
-            gridPath.lineTo(lowerLeftPx[0] + i * hourUnit, upperRightPx[1])
+        for (i in 0 until tA.numHours.toInt()) {
+            gridPath.moveTo(tA.lowerLeftPx[0] + i * tA.hourUnit, tA.lowerLeftPx[1])
+            gridPath.lineTo(tA.lowerLeftPx[0] + i * tA.hourUnit, tA.upperRightPx[1])
         }
         gridPaint.strokeWidth = watchFaceData.standardFrameWidth / 2 * size
         gridPaint.color = watchFaceColors.activeGridColor
@@ -995,49 +1168,58 @@ class AnalogWatchCanvasRenderer(
         framePaint.color = watchFaceColors.activeFrameColor
 
         val framePath = Path()
-        framePath.moveTo(size, .65f * size)
-        framePath.lineTo(0.93f * size, .65f * size)
-        val arrayArc1 = calcBezierArc(0.5f * size, 0.5f * size, 0.93f * size, 0.65f * size, 60f)
-        framePath.cubicTo(arrayArc1[0],
-                          arrayArc1[1],
-                          arrayArc1[2],
-                          arrayArc1[3],
-                          arrayArc1[4],
-                          arrayArc1[5])
-
-        framePath.lineTo(0.5f * size, 0.93f * size)
-        framePath.lineTo(0.5f * size, size)
-        framePath.moveTo(0.5f * size, 0.93f * size)
-        framePath.lineTo(size - arrayArc1[4], arrayArc1[5])
-        val arrayArc2 =
-            calcBezierArc(0.5f * size, 0.5f * size, size - arrayArc1[4], arrayArc1[5], 60f)
-        framePath.cubicTo(arrayArc2[0],
-                          arrayArc2[1],
-                          arrayArc2[2],
-                          arrayArc2[3],
-                          arrayArc2[4],
-                          arrayArc2[5])
-
-
-        framePath.lineTo(0f, 0.65f * size)
+//        // Battery Frame section
+//        framePath.moveTo(size, .65f * size)
+//        framePath.lineTo(0.93f * size, .65f * size)
+//        val arrayArc1 = calcBezierArc(0.5f * size, 0.5f * size, 0.93f * size, 0.65f * size, 60f)
+//        framePath.cubicTo(arrayArc1[0],
+//                          arrayArc1[1],
+//                          arrayArc1[2],
+//                          arrayArc1[3],
+//                          arrayArc1[4],
+//                          arrayArc1[5])
+//        // Step Frame Section
+//        framePath.lineTo(0.5f * size, 0.93f * size)
+//        framePath.lineTo(0.5f * size, size)
+//        framePath.moveTo(0.5f * size, 0.93f * size)
+//        framePath.lineTo(size - arrayArc1[4], arrayArc1[5])
+//        val arrayArc2 =
+//            calcBezierArc(0.5f * size, 0.5f * size, size - arrayArc1[4], arrayArc1[5], 60f)
+//        framePath.cubicTo(arrayArc2[0],
+//                          arrayArc2[1],
+//                          arrayArc2[2],
+//                          arrayArc2[3],
+//                          arrayArc2[4],
+//                          arrayArc2[5])
+//
+//
+//        framePath.lineTo(0f, 0.65f * size)
 
         // date and day section
-        val topCrossLineStart =
-            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.18f * size, 3)
-        val topCrossLineEnd =
-            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.18f * size, 4)
-        framePath.moveTo(topCrossLineStart[0], topCrossLineStart[1])
-        framePath.lineTo(topCrossLineEnd[0], topCrossLineEnd[1])
+//        val topCrossLineStart =
+//            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.18f * size, 3)
+//        val topCrossLineEnd =
+//            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.18f * size, 4)
+//        framePath.moveTo(topCrossLineStart[0], topCrossLineStart[1])
+//        framePath.lineTo(topCrossLineEnd[0], topCrossLineEnd[1])
+//
+//        val bottomCrossLineStart =
+//            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.28f * size, 3)
+//        val bottomCrossLineEnd =
+//            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.28f * size, 4)
+//        framePath.moveTo(bottomCrossLineStart[0], bottomCrossLineStart[1])
+//        framePath.lineTo(bottomCrossLineEnd[0], bottomCrossLineEnd[1])
+//
+//        framePath.moveTo(0.55f * size, bottomCrossLineEnd[1])
+//        framePath.lineTo(0.60f * size, topCrossLineEnd[1])
 
-        val bottomCrossLineStart =
-            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.28f * size, 3)
-        val bottomCrossLineEnd =
-            calcPointOnArc(0.5f * size, 0.5f * size, .455f * size, 0.28f * size, 4)
-        framePath.moveTo(bottomCrossLineStart[0], bottomCrossLineStart[1])
-        framePath.lineTo(bottomCrossLineEnd[0], bottomCrossLineEnd[1])
-
-        framePath.moveTo(0.55f * size, bottomCrossLineEnd[1])
-        framePath.lineTo(0.60f * size, topCrossLineEnd[1])
+        // Day and date section simplified
+        framePath.moveTo(0f, 0.68f * size)
+        framePath.lineTo(size, 0.68f * size)
+        framePath.moveTo(0f, 0.78f * size)
+        framePath.lineTo(size, 0.78f * size)
+        framePath.moveTo(0.55f * size, 0.78f * size)
+        framePath.lineTo(0.60f * size, 0.68f * size)
 
         // Next tide section
         framePath.moveTo(0f, 0.3f * size)
@@ -1056,7 +1238,7 @@ class AnalogWatchCanvasRenderer(
         canvas.drawPath(framePath, framePaint)
     }
 
-    private fun drawLogos(canvas: Canvas){
+    private fun drawLogos(canvas: Canvas) {
         // Sunshine logo
         val sunshinePath = Path()
         var squarePoints = generateSquare(0.725f * size,
@@ -1096,40 +1278,40 @@ class AnalogWatchCanvasRenderer(
         primaryPaint.style = Paint.Style.STROKE
         canvas.drawPath(sunshinePath, primaryPaint)
 
-        // Battery Logo
-        val batteryPath = Path()
-        primaryPaint.strokeWidth = watchFaceData.standardFrameWidth * size / 2
-        primaryPaint.style = Paint.Style.FILL
-        batteryPath.moveTo(0.52f * size, 0.92f * size - primaryPaint.strokeWidth / 2)
-        batteryPath.lineTo(0.52f * size, 0.87f * size)
-        batteryPath.lineTo(0.53f * size, 0.87f * size)
-        batteryPath.lineTo(0.53f * size, 0.865f * size)
-        batteryPath.lineTo(0.54f * size, 0.865f * size)
-        batteryPath.lineTo(0.54f * size, 0.87f * size)
-        batteryPath.lineTo(0.55f * size, 0.87f * size)
-        batteryPath.lineTo(0.55f * size, 0.92f * size)
-        batteryPath.lineTo(0.52f * size, 0.92f * size)
-        canvas.drawPath(batteryPath, primaryPaint)
+//        // Battery Logo
+//        val batteryPath = Path()
+//        primaryPaint.strokeWidth = watchFaceData.standardFrameWidth * size / 2
+//        primaryPaint.style = Paint.Style.FILL
+//        batteryPath.moveTo(0.52f * size, 0.92f * size - primaryPaint.strokeWidth / 2)
+//        batteryPath.lineTo(0.52f * size, 0.87f * size)
+//        batteryPath.lineTo(0.53f * size, 0.87f * size)
+//        batteryPath.lineTo(0.53f * size, 0.865f * size)
+//        batteryPath.lineTo(0.54f * size, 0.865f * size)
+//        batteryPath.lineTo(0.54f * size, 0.87f * size)
+//        batteryPath.lineTo(0.55f * size, 0.87f * size)
+//        batteryPath.lineTo(0.55f * size, 0.92f * size)
+//        batteryPath.lineTo(0.52f * size, 0.92f * size)
+//        canvas.drawPath(batteryPath, primaryPaint)
 
-        // Step Logo
-        val stepPath = Path()
-        stepPath.moveTo(0.48f * size, 0.9f * size)
-        stepPath.lineTo(0.45f * size, 0.92f * size)
-        stepPath.lineTo(0.42f * size, 0.92f * size)
-        stepPath.cubicTo(0.41f * size, 0.91f * size,
-                         0.425f * size, 0.907f * size,
-                         0.435f * size, 0.905f * size)
-        stepPath.lineTo(0.445f * size, 0.89f * size)
-        stepPath.cubicTo(0.445f * size, 0.87f * size,
-                         0.45f * size, 0.88f * size,
-                         0.46f * size, 0.88f * size)
-        stepPath.cubicTo(0.47f * size, 0.88f * size,
-                         0.47f * size, 0.87f * size,
-                         0.475f * size, 0.88f * size)
-        stepPath.cubicTo(0.475f * size, 0.89f * size,
-                         0.483f * size, 0.895f * size,
-                         0.48f * size, 0.9f * size)
-        canvas.drawPath(stepPath, primaryPaint)
+//        // Step Logo
+//        val stepPath = Path()
+//        stepPath.moveTo(0.48f * size, 0.9f * size)
+//        stepPath.lineTo(0.45f * size, 0.92f * size)
+//        stepPath.lineTo(0.42f * size, 0.92f * size)
+//        stepPath.cubicTo(0.41f * size, 0.91f * size,
+//                         0.425f * size, 0.907f * size,
+//                         0.435f * size, 0.905f * size)
+//        stepPath.lineTo(0.445f * size, 0.89f * size)
+//        stepPath.cubicTo(0.445f * size, 0.87f * size,
+//                         0.45f * size, 0.88f * size,
+//                         0.46f * size, 0.88f * size)
+//        stepPath.cubicTo(0.47f * size, 0.88f * size,
+//                         0.47f * size, 0.87f * size,
+//                         0.475f * size, 0.88f * size)
+//        stepPath.cubicTo(0.475f * size, 0.89f * size,
+//                         0.483f * size, 0.895f * size,
+//                         0.48f * size, 0.9f * size)
+//        canvas.drawPath(stepPath, primaryPaint)
 
         primaryPaint.strokeWidth = watchFaceData.standardFrameWidth * size
         primaryPaint.style = Paint.Style.STROKE

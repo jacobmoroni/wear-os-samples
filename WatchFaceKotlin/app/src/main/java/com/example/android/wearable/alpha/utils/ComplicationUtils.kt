@@ -16,10 +16,12 @@
 package com.example.android.wearable.alpha.utils
 
 import android.content.Context
+import android.graphics.Rect
 import android.graphics.RectF
 import androidx.wear.watchface.CanvasComplicationFactory
 import androidx.wear.watchface.ComplicationSlot
 import androidx.wear.watchface.ComplicationSlotsManager
+import androidx.wear.watchface.ComplicationTapFilter
 import androidx.wear.watchface.complications.ComplicationSlotBounds
 import androidx.wear.watchface.complications.DefaultComplicationDataSourcePolicy
 import androidx.wear.watchface.complications.SystemDataSources
@@ -33,14 +35,14 @@ import com.example.android.wearable.alpha.R
 // Creates bounds for the locations of both right and left complications. (This is the
 // location from 0.0 - 1.0.)
 // Both left and right complications use the same top and bottom bounds.
-private const val LEFT_AND_RIGHT_COMPLICATIONS_TOP_BOUND = 0.45f
-private const val LEFT_AND_RIGHT_COMPLICATIONS_BOTTOM_BOUND = 0.65f
+private const val LEFT_AND_RIGHT_COMPLICATIONS_TOP_BOUND = 0.78f
+private const val LEFT_AND_RIGHT_COMPLICATIONS_BOTTOM_BOUND = 1.0f
 
-private const val LEFT_COMPLICATION_LEFT_BOUND = 0.2f
-private const val LEFT_COMPLICATION_RIGHT_BOUND = 0.4f
+private const val LEFT_COMPLICATION_LEFT_BOUND = 0.26f
+private const val LEFT_COMPLICATION_RIGHT_BOUND = 0.48f
 
-private const val RIGHT_COMPLICATION_LEFT_BOUND = 0.6f
-private const val RIGHT_COMPLICATION_RIGHT_BOUND = 0.8f
+private const val RIGHT_COMPLICATION_LEFT_BOUND = 0.52f
+private const val RIGHT_COMPLICATION_RIGHT_BOUND = 0.74f
 
 private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_red_style
 
@@ -88,13 +90,41 @@ fun createComplicationSlotManager(
                 listener
             )
         }
-
+//    // This is sort of how to do an edge complication but apparently that is not functional yet
+//    val tapFilter = object : ComplicationTapFilter {
+//        override fun hitTest(complicationSlot: ComplicationSlot,
+//                             screenBounds: Rect,
+//                             x: Int,
+//                             y: Int): Boolean {
+//            return true
+//        }
+//    }
+//
+//    val leftComplication = ComplicationSlot.createEdgeComplicationSlotBuilder(
+//        id = ComplicationConfig.Left.id,
+//        canvasComplicationFactory = defaultCanvasComplicationFactory,
+//        supportedTypes = ComplicationConfig.Left.supportedTypes,
+//        defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
+//            SystemDataSources.DATA_SOURCE_DAY_OF_WEEK
+//        ),
+//        bounds = ComplicationSlotBounds(
+//            RectF(
+//                LEFT_COMPLICATION_LEFT_BOUND,
+//                LEFT_AND_RIGHT_COMPLICATIONS_TOP_BOUND,
+//                LEFT_COMPLICATION_RIGHT_BOUND,
+//                LEFT_AND_RIGHT_COMPLICATIONS_BOTTOM_BOUND
+//            )
+//        ),
+//        complicationTapFilter = tapFilter
+//
+//    ).setDefaultDataSourceType(ComplicationType.SHORT_TEXT)
+//        .build()
     val leftComplication = ComplicationSlot.createRoundRectComplicationSlotBuilder(
         id = ComplicationConfig.Left.id,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.Left.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_DAY_OF_WEEK
+            SystemDataSources.DATA_SOURCE_STEP_COUNT
         ),
         bounds = ComplicationSlotBounds(
             RectF(
@@ -106,13 +136,12 @@ fun createComplicationSlotManager(
         )
     ).setDefaultDataSourceType(ComplicationType.SHORT_TEXT)
         .build()
-
     val rightComplication = ComplicationSlot.createRoundRectComplicationSlotBuilder(
         id = ComplicationConfig.Right.id,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
         supportedTypes = ComplicationConfig.Right.supportedTypes,
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
-            SystemDataSources.DATA_SOURCE_STEP_COUNT
+            SystemDataSources.DATA_SOURCE_WATCH_BATTERY
         ),
         bounds = ComplicationSlotBounds(
             RectF(

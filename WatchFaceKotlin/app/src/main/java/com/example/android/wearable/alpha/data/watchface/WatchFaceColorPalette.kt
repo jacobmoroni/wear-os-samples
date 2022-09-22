@@ -36,6 +36,7 @@ data class WatchFaceColorPalette(
     val activeFrameColor: Int,
     val activeGridColor: Int,
     val activeTideColor: Int,
+    val activeDaylightColor: Int,
     val activeLowBatteryColor: Int,
     val activeBackgroundColor: Int,
     @DrawableRes val complicationStyleDrawableId: Int,
@@ -43,6 +44,7 @@ data class WatchFaceColorPalette(
     val ambientFrameColor: Int,
     val ambientGridColor: Int,
     val ambientTideColor: Int,
+    val ambientDaylightColor: Int,
     val ambientLowBatteryColor: Int,
     val ambientBackgroundColor: Int
 ) {
@@ -61,6 +63,7 @@ data class WatchFaceColorPalette(
                 activeFrameColor = context.getColor(activeColorStyle.frameColorId),
                 activeGridColor = context.getColor(activeColorStyle.gridColorId),
                 activeTideColor = context.getColor(activeColorStyle.tideColorId),
+                activeDaylightColor = context.getColor(activeColorStyle.daylightColorId),
                 activeLowBatteryColor = context.getColor(activeColorStyle.lowBatteryColorId),
                 activeBackgroundColor = context.getColor(activeColorStyle.backgroundColorId),
                 // Complication color style
@@ -70,6 +73,7 @@ data class WatchFaceColorPalette(
                 ambientFrameColor = context.getColor(ambientColorStyle.frameColorId),
                 ambientGridColor = context.getColor(ambientColorStyle.gridColorId),
                 ambientTideColor = context.getColor(ambientColorStyle.tideColorId),
+                ambientDaylightColor = context.getColor(ambientColorStyle.daylightColorId),
                 ambientLowBatteryColor = context.getColor(ambientColorStyle.lowBatteryColorId),
                 ambientBackgroundColor = context.getColor(ambientColorStyle.backgroundColorId)
             )

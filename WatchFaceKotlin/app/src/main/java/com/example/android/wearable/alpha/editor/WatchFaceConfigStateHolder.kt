@@ -33,7 +33,7 @@ import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRAC
 import com.example.android.wearable.alpha.utils.COLOR_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.DRAW_HOUR_PIPS_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
-import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
+//import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.WATCH_HAND_LENGTH_STYLE_SETTING
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -168,9 +168,9 @@ class WatchFaceConfigStateHolder(
             LEFT_COMPLICATION_ID -> {
                 LEFT_COMPLICATION_ID
             }
-            RIGHT_COMPLICATION_ID -> {
-                RIGHT_COMPLICATION_ID
-            }
+//            RIGHT_COMPLICATION_ID -> {
+//                RIGHT_COMPLICATION_ID
+//            }
             else -> {
                 return
             }
