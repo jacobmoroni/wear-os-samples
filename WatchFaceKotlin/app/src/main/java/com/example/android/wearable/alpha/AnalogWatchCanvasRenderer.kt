@@ -299,6 +299,7 @@ class AnalogWatchCanvasRenderer(
             drawDaylightBlock(canvas, zonedDateTime, tideArea, sunriseTime, sunsetTime)
             drawTides(canvas, tideArea)
             drawTideAxes(canvas, tideArea)
+            drawTideInfo(canvas, zonedDateTime)
             drawMoonFrame(canvas)
             drawMoonPhase(canvas, moonPhase)
             drawFrame(canvas)
@@ -347,14 +348,21 @@ class AnalogWatchCanvasRenderer(
             }
         }
         return -1
+        return -1
     }
 
     private fun updateActiveTides(zdt: ZonedDateTime) {
-        if (nextTideIdx == -1){
-            for (i in 0 .. 5){
-                val tideEntry = Pair(0f, Pair(1f, false))
-                activeTides[i] = tideEntry
+        if (nextTideIdx <= 2){
+            if (nextTideIdx == -1){
+                activeTides[0] = Pair(-16f, Pair(-2f, false))
+                activeTides[1] = Pair(-8f, Pair(6f, true))
+                activeTides[2] = Pair(0f, Pair(-2f, false))
+                activeTides[3] = Pair(8f, Pair(6f, true))
+                activeTides[4] = Pair(16f, Pair(-2f, false))
+                activeTides[5] = Pair(24f, Pair(6f, true))
             }
+            initialized = false
+
         } else {
             for (i in 0 .. 5){
                 val tideIdx = nextTideIdx + i - 2
@@ -481,6 +489,7 @@ class AnalogWatchCanvasRenderer(
         val c = ((275 * (zdt.monthValue)).toDouble() / 9.0).toInt()
         val julianDatetime =
             (367 * (zdt.year) - b + c + zdt.dayOfMonth).toDouble() + 1721013.5 + daySegment
+            (367 * (zdt.year) - b + c + zdt.dayOfMonth).toDouble() + 1721013.5 + daySegment
         //Angles here are in degrees
         //1980 January 0.0 in JDN
         //XXX: DateTime(1980).jdn yields 2444239.5 -- which one is right?
@@ -557,6 +566,7 @@ class AnalogWatchCanvasRenderer(
                                   sunsetTime: Float) {
         //draw daylight rectangle
         val daylightHours = (sunsetTime - sunriseTime + 24f).mod(24f);
+        Log.d("this", "daylight: $daylightHours")
         val sunriseDiff = (zdt.hour.toFloat() + zdt.minute.toFloat() / 60.0f) - sunriseTime
         tidePaint.strokeCap = Paint.Cap.SQUARE
         tidePaint.color = watchFaceColors.activeDaylightColor
@@ -565,7 +575,7 @@ class AnalogWatchCanvasRenderer(
         daylightBox.bottom = tA.lowerLeftPx[1]
         daylightBox.left = tA.time0px - sunriseDiff * tA.hourUnit
         daylightBox.top = tA.upperRightPx[1]
-        daylightBox.right = tA.time0px + daylightBox.left + daylightHours * tA.hourUnit
+        daylightBox.right = daylightBox.left + daylightHours * tA.hourUnit
 
         val nextDaylightBox = RectF()
         nextDaylightBox.bottom = tA.lowerLeftPx[1]
@@ -605,13 +615,15 @@ class AnalogWatchCanvasRenderer(
         } catch (e : Exception){
             Log.d("this", "tide exception: $e")
         }
-//        // clean up tide overhang
-//        cairo_set_source_rgb(ad->cairo, 0, 0, 0);
-//        cairo_rectangle(ad->cairo, 0, 0, l_point, min_y+5);
-//        cairo_fill(ad->cairo);
-//        cairo_set_source_rgb(ad->cairo, 0, 0, 0);
-//        cairo_rectangle(ad->cairo, r_point+2, 0, 360, min_y+5);
-//        cairo_fill(ad->cairo);
+
+        val cleanUpRect = RectF()
+        cleanUpRect.left = tA.upperRightPx[0]
+        cleanUpRect.bottom = tA.lowerLeftPx[1]
+        cleanUpRect.right = size
+        cleanUpRect.top = tA.upperRightPx[1]
+        gridPaint.style = Paint.Style.FILL
+        gridPaint.color = watchFaceColors.activeBackgroundColor
+        canvas.drawRect(cleanUpRect,gridPaint)
     }
 
     private fun drawTideAxes(canvas: Canvas, tA: TideRenderArea){
@@ -622,6 +634,68 @@ class AnalogWatchCanvasRenderer(
         tideAxesPath.moveTo(tA.lowerLeftPx[0], tA.tide0px)
         tideAxesPath.lineTo(tA.upperRightPx[0], tA.tide0px)
         canvas.drawPath(tideAxesPath, primaryPaint)
+    }
+
+    fun Float.format(digits: Int) = "%.${digits}f".format(this)
+
+    private fun drawTideInfo(canvas: Canvas, zdt: ZonedDateTime){
+//        int f_ul_x = 0;
+//        int f_ul_y = 109;
+//        int f_w = 215;
+//        int f_h = 35;
+//
+//        int label_x = 12;
+//        int label_y = 137;
+//        int label_f_sz = 12;
+//
+//        int tt_x = 60;
+//        int tt_y = 134;
+//        int tt_f_sz = 25;
+//
+//        int tl_x = 140;
+//        int tl_y = tt_y;
+//        int tl_f_sz = 25;
+//
+//        int ti_x = 52;
+//        int ti_y = 135;
+//        int ti_h = 18;
+        val tidePair = tideList[nextTideIdx]
+        val nextTideZdt = tidePair.first.withZoneSameInstant(zdt.zone)
+        val nextTideHeight = tidePair.second.first
+        val nextTideHigh = tidePair.second.second
+
+        textPaint.textSize = .08f * size
+        val hourMinuteFormatter = DateTimeFormatter.ofPattern("hh:mm")
+        val hourMinuteString = nextTideZdt.format(hourMinuteFormatter)
+        canvas.drawText(hourMinuteString, 0.18f * size, 0.38f * size, textPaint)
+        val amPmFormatter = DateTimeFormatter.ofPattern("a")
+        val amPmString = nextTideZdt.format(amPmFormatter)[0]
+        textPaint.textSize = .05f * size
+        canvas.drawText(amPmString.toString(), 0.38f * size, 0.38f * size, textPaint)
+
+        textPaint.textSize = 0.08f * size
+        val tideHeightString = if (nextTideHeight > 0){
+            nextTideHeight.format(2)
+        } else {
+            nextTideHeight.format(1)
+        }
+        canvas.drawText(tideHeightString, 0.44f * size, 0.38f * size, textPaint)
+        textPaint.textSize = 0.05f * size
+        canvas.drawText("FT", 0.58f * size, 0.38f * size, textPaint)
+
+        // Tide indicator
+//        if (nextTideHigh) {
+//            drawArrow(ti_x, ti_y, ti_h, 3, ad);
+//        }
+//        else
+//        {
+//            drawArrow(ti_x, ti_y-ti_h, -ti_h, 3, ad);
+//        }
+//        cairo_stroke(ad->cairo);
+    }
+
+    private fun drawArrow(baseX: Float, baseY: Float, height: Float, width: Float, canvas: Canvas){
+
     }
 
     private fun drawMoonFrame(canvas: Canvas) {
@@ -1267,6 +1341,8 @@ class AnalogWatchCanvasRenderer(
         canvas.drawCircle(0.725f * size, 0.355f * size, 0.023f * size, primaryPaint)
 
         // Sun rise/set arrows
+
+
         sunshinePath.moveTo(0.8f * size, 0.37f * size)
         sunshinePath.lineTo(0.8f * size, 0.315f * size)
         sunshinePath.lineTo(0.79f * size, 0.34f * size)

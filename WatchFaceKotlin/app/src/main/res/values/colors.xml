@@ -45,16 +45,16 @@
     <color name="green_primary_color">@color/light_green</color>
     <color name="green_frame_color">@color/dark_green</color>
     <color name="green_grid_color">@color/light_green_30</color>
-    <color name="green_tide_color">@color/red</color>
+    <color name="green_tide_color">@color/dark_green</color>
     <color name="green_daylight_color">@color/daylight_blue</color>
     <color name="green_low_battery_color">@color/red</color>
     <color name="green_background_color">@color/black</color>
 
     <!-- Blue Style -->
     <color name="blue_primary_color">@color/light_blue</color>
-    <color name="blue_frame_color">@color/light_blue</color>
-    <color name="blue_grid_color">@color/dark_blue</color>
-    <color name="blue_tide_color">@color/orange</color>
+    <color name="blue_frame_color">@color/dark_blue</color>
+    <color name="blue_grid_color">@color/light_blue_30</color>
+    <color name="blue_tide_color">@color/dark_blue</color>
     <color name="blue_daylight_color">@color/daylight_blue</color>
     <color name="blue_low_battery_color">@color/red</color>
     <color name="blue_background_color">@color/black</color>
@@ -115,5 +115,7 @@
     <color name="orange">#FF8303</color>
     <color name="dark_blue">#1565C0</color>
     <color name="daylight_blue">#B2E5FF</color>
+    <color name="violet">#6700E6</color>
+    <color name="blue_accent">#0076E6</color>
 </resources>
 
