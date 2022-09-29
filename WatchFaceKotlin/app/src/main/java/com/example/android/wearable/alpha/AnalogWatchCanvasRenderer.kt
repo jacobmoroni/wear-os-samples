@@ -36,9 +36,7 @@ import androidx.wear.watchface.style.WatchFaceLayer
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
 import com.example.android.wearable.alpha.data.watchface.WatchFaceColorPalette.Companion.convertToWatchFaceColorPalette
 import com.example.android.wearable.alpha.data.watchface.WatchFaceData
-import com.example.android.wearable.alpha.utils.COLOR_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.DRAW_HOUR_PIPS_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.WATCH_HAND_LENGTH_STYLE_SETTING
+import com.example.android.wearable.alpha.utils.*
 import java.lang.Exception
 import java.time.Duration
 import java.time.ZoneId
@@ -96,7 +94,7 @@ class AnalogWatchCanvasRenderer(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     // Represents all data needed to render the watch face. All value defaults are constants. Only
-    // three values are changeable by the user (color scheme, ticks being rendered, and length of
+    // four values are changeable by the user (color scheme, sunrise location (lat and lon), and length of
     // the minute arm). Those dynamic values are saved in the watch face APIs and we update those
     // here (in the renderer) through a Kotlin Flow.
     private var watchFaceData: WatchFaceData = WatchFaceData()
@@ -124,7 +122,6 @@ class AnalogWatchCanvasRenderer(
         isAntiAlias = true
     }
 
-    // Used to paint the main hour hand text with the hour pips, i.e., 3, 6, 9, and 12 o'clock.
     private val textPaint = Paint().apply {
         isAntiAlias = true
         textSize = context.resources.getDimensionPixelSize(R.dimen.hour_mark_size).toFloat()
@@ -172,12 +169,18 @@ class AnalogWatchCanvasRenderer(
                     )
                 }
                 // TODO: Replace These settings with new settings (Lat Lon, Tide Location, Tide Color ...)
-                DRAW_HOUR_PIPS_STYLE_SETTING -> {
-                    val booleanValue = options.value as
-                        UserStyleSetting.BooleanUserStyleSetting.BooleanOption
-
+                SUNRISE_LAT_STYLE_SETTING -> {
+                    val doubleValue =
+                        options.value as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
                     newWatchFaceData = newWatchFaceData.copy(
-                        drawHourPips = booleanValue.value
+                        sunriseLat = doubleValue.value.toFloat()
+                    )
+                }
+                SUNRISE_LON_STYLE_SETTING -> {
+                    val doubleValue =
+                        options.value as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
+                    newWatchFaceData = newWatchFaceData.copy(
+                        sunriseLon = doubleValue.value.toFloat()
                     )
                 }
                 WATCH_HAND_LENGTH_STYLE_SETTING -> {
@@ -288,10 +291,14 @@ class AnalogWatchCanvasRenderer(
             tideArea.maxTide = 6f
             tideArea.updateValues()
             drawGrid(canvas, tideArea)
-            val lat = 40.297119f
-            val lon = -111.695007f
-            val sunriseTime = calculateSunriseAndSunset(zonedDateTime, lat, lon, true)
-            val sunsetTime = calculateSunriseAndSunset(zonedDateTime, lat, lon, false)
+            val sunriseTime = calculateSunriseAndSunset(zonedDateTime,
+                                                        watchFaceData.sunriseLat,
+                                                        watchFaceData.sunriseLon,
+                                                        true)
+            val sunsetTime = calculateSunriseAndSunset(zonedDateTime,
+                                                       watchFaceData.sunriseLat,
+                                                       watchFaceData.sunriseLon,
+                                                       false)
             val moonPhase = calculateMoonPhase(zonedDateTime)
             drawSunriseAndSunsetTime(canvas, sunriseTime, sunsetTime)
             //            drawBatteryPercent(canvas)
@@ -1484,9 +1491,6 @@ class AnalogWatchCanvasRenderer(
 
     companion object {
         private const val TAG = "AnalogWatchCanvasRenderer"
-
-        // Painted between pips on watch face for hour marks.
-        private val HOUR_MARKS = arrayOf("3", "6", "9", "12")
 
         // Used to canvas.scale() to scale watch hands in proper bounds. This will always be 1.0.
         private const val WATCH_HAND_SCALE = 1.0f

@@ -31,7 +31,8 @@ import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRAC
 import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRACTION_MAXIMUM
 import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRACTION_MINIMUM
 import com.example.android.wearable.alpha.utils.COLOR_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.DRAW_HOUR_PIPS_STYLE_SETTING
+import com.example.android.wearable.alpha.utils.SUNRISE_LAT_STYLE_SETTING
+import com.example.android.wearable.alpha.utils.SUNRISE_LON_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.WATCH_HAND_LENGTH_STYLE_SETTING
@@ -72,7 +73,8 @@ class WatchFaceConfigStateHolder(
 
     // Keys from Watch Face Data Structure
     private lateinit var colorStyleKey: UserStyleSetting.ListUserStyleSetting
-    private lateinit var drawPipsKey: UserStyleSetting.BooleanUserStyleSetting
+    private lateinit var sunriseLatKey: UserStyleSetting.DoubleRangeUserStyleSetting
+    private lateinit var sunriseLonKey: UserStyleSetting.DoubleRangeUserStyleSetting
     private lateinit var minuteHandLengthKey: UserStyleSetting.DoubleRangeUserStyleSetting
 
     val uiState: StateFlow<EditWatchFaceUiState> =
@@ -108,11 +110,12 @@ class WatchFaceConfigStateHolder(
                 COLOR_STYLE_SETTING -> {
                     colorStyleKey = setting as UserStyleSetting.ListUserStyleSetting
                 }
-
-                DRAW_HOUR_PIPS_STYLE_SETTING -> {
-                    drawPipsKey = setting as UserStyleSetting.BooleanUserStyleSetting
+                SUNRISE_LAT_STYLE_SETTING -> {
+                    sunriseLatKey = setting as UserStyleSetting.DoubleRangeUserStyleSetting
                 }
-
+                SUNRISE_LON_STYLE_SETTING -> {
+                    sunriseLonKey = setting as UserStyleSetting.DoubleRangeUserStyleSetting
+                }
                 WATCH_HAND_LENGTH_STYLE_SETTING -> {
                     minuteHandLengthKey = setting as UserStyleSetting.DoubleRangeUserStyleSetting
                 }
@@ -147,17 +150,20 @@ class WatchFaceConfigStateHolder(
 
         val colorStyle =
             userStyle[colorStyleKey] as UserStyleSetting.ListUserStyleSetting.ListOption
-        val ticksEnabledStyle =
-            userStyle[drawPipsKey] as UserStyleSetting.BooleanUserStyleSetting.BooleanOption
+        val sunriseLatStyle =
+            userStyle[sunriseLatKey] as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
+        val sunriseLonStyle =
+            userStyle[sunriseLonKey] as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
         val minuteHandStyle =
             userStyle[minuteHandLengthKey]
                 as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
 
-        Log.d(TAG, "/new values: $colorStyle, $ticksEnabledStyle, $minuteHandStyle")
+        Log.d(TAG, "/new values: $colorStyle, $sunriseLatStyle, $sunriseLonStyle, $minuteHandStyle")
 
         return UserStylesAndPreview(
             colorStyleId = colorStyle.id.toString(),
-            ticksEnabled = ticksEnabledStyle.value,
+            sunriseLat = sunriseLatStyle.value.toFloat(),
+            sunriseLon = sunriseLonStyle.value.toFloat(),
             minuteHandLength = multiplyByMultipleForSlider(minuteHandStyle.value).toFloat(),
             previewImage = bitmap
         )
@@ -202,10 +208,17 @@ class WatchFaceConfigStateHolder(
         }
     }
 
-    fun setDrawPips(enabled: Boolean) {
+    fun setSunriseLat(lat: Double) {
         setUserStyleOption(
-            drawPipsKey,
-            UserStyleSetting.BooleanUserStyleSetting.BooleanOption.from(enabled)
+            sunriseLatKey,
+            UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption(lat)
+        )
+    }
+
+    fun setSunriseLon(lon: Double) {
+        setUserStyleOption(
+            sunriseLonKey,
+            UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption(lon)
         )
     }
 
@@ -245,7 +258,8 @@ class WatchFaceConfigStateHolder(
 
     data class UserStylesAndPreview(
         val colorStyleId: String,
-        val ticksEnabled: Boolean,
+        val sunriseLat: Float,
+        val sunriseLon: Float,
         val minuteHandLength: Float,
         val previewImage: Bitmap
     )

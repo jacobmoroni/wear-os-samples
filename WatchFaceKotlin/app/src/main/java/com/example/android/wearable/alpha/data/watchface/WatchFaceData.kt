@@ -15,10 +15,6 @@
  */
 package com.example.android.wearable.alpha.data.watchface
 
-// Defaults for the watch face. All private values aren't editable by the user, so they don't need
-// to be exposed as settings defaults.
-const val DRAW_HOUR_PIPS_DEFAULT = true
-
 private const val HOUR_HAND_LENGTH_FRACTION = 0.21028f
 private const val HOUR_HAND_WIDTH_FRACTION = 0.02336f
 
@@ -29,6 +25,14 @@ const val MINUTE_HAND_LENGTH_FRACTION_DEFAULT = 0.3783f
 const val MINUTE_HAND_LENGTH_FRACTION_MINIMUM = 0.10000f
 const val MINUTE_HAND_LENGTH_FRACTION_MAXIMUM = 0.40000f
 private const val MINUTE_HAND_WIDTH_FRACTION = 0.0163f
+
+const val LAT_DEFAULT = 40.297119f
+const val LAT_MAX = 90.0f
+const val LAT_MIN = -90.0f
+
+const val LON_DEFAULT = -111.695007f
+const val LON_MAX = 180.0f
+const val LON_MIN = -180.0f
 
 private const val SECOND_HAND_LENGTH_FRACTION = 0.37383f
 private const val SECOND_HAND_WIDTH_FRACTION = 0.00934f
@@ -53,7 +57,6 @@ private const val NUMBER_RADIUS_FRACTION = 0.45f
 data class WatchFaceData(
     val activeColorStyle: ColorStyleIdAndResourceIds = ColorStyleIdAndResourceIds.RED,
     val ambientColorStyle: ColorStyleIdAndResourceIds = ColorStyleIdAndResourceIds.AMBIENT,
-    val drawHourPips: Boolean = DRAW_HOUR_PIPS_DEFAULT,
     val hourHandDimensions: ArmDimensions = ArmDimensions(
         lengthFraction = HOUR_HAND_LENGTH_FRACTION,
         widthFraction = HOUR_HAND_WIDTH_FRACTION,
@@ -72,6 +75,8 @@ data class WatchFaceData(
         xRadiusRoundedCorners = ROUNDED_RECTANGLE_CORNERS_RADIUS,
         yRadiusRoundedCorners = ROUNDED_RECTANGLE_CORNERS_RADIUS
     ),
+    val sunriseLat: Float = LAT_DEFAULT,
+    val sunriseLon: Float = LON_DEFAULT,
     val centerCircleDiameterFraction: Float = CENTER_CIRCLE_DIAMETER_FRACTION,
     val numberRadiusFraction: Float = NUMBER_RADIUS_FRACTION,
     val outerCircleStokeWidthFraction: Float = OUTER_CIRCLE_STROKE_WIDTH_FRACTION,

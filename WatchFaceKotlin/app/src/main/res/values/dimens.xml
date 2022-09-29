@@ -25,7 +25,7 @@
     <dimen name="activity_config_spacer_height_pre_slider">20dp</dimen>
     <dimen name="activity_config_more_options_padding">10dp</dimen>
     <dimen name="activity_config_style_picker_icon_padding">2dp</dimen>
-    <dimen name="activity_config_ticks_enabled_switch_icon_padding">2dp</dimen>
+    <dimen name="activity_config_sunrise_location_icon_padding">2dp</dimen>
 
     <dimen name="settings_default_text_size">12sp</dimen>
 

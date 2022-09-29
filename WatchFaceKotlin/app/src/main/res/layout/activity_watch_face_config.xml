@@ -57,10 +57,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
+            android:contentDescription="@string/activity_config_more_options_icon_content_description"
             android:padding="@dimen/activity_config_more_options_padding"
             android:src="@drawable/more_options_icon"
-            android:contentDescription="@string/activity_config_more_options_icon_content_description"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/preview" />
 
@@ -68,34 +69,56 @@
             android:id="@+id/color_style_picker_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            style="@style/Widget.WatchFace.Button"
-            app:icon="@drawable/color_style_icon"
-            app:iconPadding="@dimen/activity_config_style_picker_icon_padding"
             android:padding="@dimen/no_padding"
-            android:gravity="start|center_vertical"
+            android:gravity="center"
             android:onClick="onClickColorStylePickerButton"
             android:text="@string/activity_config_color_style_picker_label"
+            android:textColor="@color/white"
             android:textAppearance="?attr/textAppearanceButton"
             android:contentDescription="@string/activity_config_change_color_style_button_content_description"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/more_options_image_view" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/ticks_enabled_switch"
+        <TextView
+            android:id="@+id/sunrise_location_label"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:drawableStart="@drawable/watch_ticks"
-            android:drawablePadding="@dimen/activity_config_ticks_enabled_switch_icon_padding"
-            android:gravity="start|center_vertical"
-            android:onClick="onClickTicksEnabledSwitch"
-            android:text="@string/activity_config_ticks_enabled_label"
+            android:gravity="center"
+            android:text="@string/activity_config_sunrise_location_label"
             android:textColor="@color/white"
             android:textAppearance="?attr/textAppearanceButton"
-            android:contentDescription="@string/activity_config_ticks_enabled_switch_content_description"
+            android:contentDescription="@string/current_location_content_description"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/color_style_picker_button" />
+
+        <TextView
+            android:id="@+id/location_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/current_location_label"
+            android:textColor="@color/white"
+            android:textAppearance="?attr/textAppearanceButton"
+            android:contentDescription="@string/current_location_content_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/sunrise_location_label" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sunrise_location_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/no_padding"
+            android:gravity="center"
+            android:onClick="onClickSunriseLocationButton"
+            android:text="@string/activity_config_sunrise_update_label"
+            android:textAppearance="?attr/textAppearanceButton"
+            android:contentDescription="@string/activity_config_sunrise_location_content_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/location_label" />
 
         <Space
             android:id="@+id/pre_slider_spacer"
@@ -103,7 +126,7 @@
             android:layout_height="@dimen/activity_config_spacer_height_pre_slider"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ticks_enabled_switch" />
+            app:layout_constraintTop_toBottomOf="@+id/sunrise_location_button" />
 
         <TextView
             android:id="@+id/slider_label"
@@ -133,16 +156,9 @@
             android:layout_width="0dp"
             android:layout_height="@dimen/activity_config_spacer_height_post_content"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/minute_hand_length_slider" />
-
-        <Button
-            android:id="@+id/button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Button"
-            app:layout_constraintTop_toBottomOf="@+id/minute_hand_length_slider"
-            tools:layout_editor_absoluteX="60dp" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
 

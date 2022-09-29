@@ -40,13 +40,11 @@
     <!-- Name of watchface style [CHAR LIMIT=20] -->
     <string name="white_style_name">White Style</string>
 
-    <!-- An option within the analog watch face to draw pips to mark each hour [CHAR LIMIT=20] -->
-    <string name="watchface_pips_setting">Hour Pips</string>
-
-    <!-- Subtitle for the menu option to configure if we should draw pips to mark each hour
-     on the watch face -->
-    <string name="watchface_pips_setting_description">Whether to draw or not</string>
-
+    <!-- sunrise lat and lon [CHAR LIMIT=20] -->
+    <string name="sunrise_lat_setting">Sunrise Lat</string>
+    <string name="sunrise_lon_setting">Sunrise Lon</string>
+    <string name="sunrise_lat_description">Latitude of sunrise and sunset calculation</string>
+    <string name="sunrise_lon_description">Longitude of sunrise and sunset calculation</string>
     <!-- A menu option to select a widget that lets us configure the length of the watch hands
     [CHAR LIMIT=20] -->
     <string name="watchface_hand_length_setting">Minute Hand length</string>
@@ -84,13 +82,16 @@
     <string name="title_activity_watch_face_config">Configuration</string>
     <!-- Use of "\n" is to conserve horizontal space in config menu. -->
     <string name="activity_config_color_style_picker_label">Color\nStyle</string>
-    <string name="activity_config_ticks_enabled_label">Ticks\nEnabled</string>
+    <string name="activity_config_sunrise_location_label">Sunrise/Sunset\nLocation:</string>
+    <string name="activity_config_sunrise_update_label">Update</string>
     <string name="activity_config_slider_text_label">Minute Hand Size</string>
+    <string name="current_location_label">Not Set</string>
     <!-- Content Descriptions -->
     <string name="activity_config_preview_of_watch_face_content_description">Preview of Watch Face.</string>
     <string name="activity_config_more_options_icon_content_description">Icon to indicate there are more options if you scroll down.</string>
     <string name="activity_config_change_color_style_button_content_description">Button to change the color style of the watch face.</string>
-    <string name="activity_config_ticks_enabled_switch_content_description">Displays or hides the outer marks for the watch face.</string>
+    <string name="activity_config_sunrise_location_content_description">Sets location for sunrise and sunset location.</string>
+    <string name="current_location_content_description">location for sunrise and sunset.</string>
     <string name="activity_config_minute_hand_slider_text_label_content_description">Label for hand length slider below.</string>
     <string name="activity_config_minute_hand_length_slider_content_description">Slider for adjusting the minute hand length.</string>
     <string name="activity_config_screenshot_content_description">Screenshot of Watch Face</string>

@@ -84,9 +84,7 @@ dependencies {
     implementation libs.wear.watchface.data
     implementation libs.wear.watchface.editor
     implementation libs.wear.watchface.style
-
-    // Health data for step counter
-    // This is only available on samsung. Need to find a way to get around that for emulator
-//    implementation 'com.google.android.libraries.healthdata:health-data-api:1.1.0-alpha01'
+//    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    implementation 'com.google.android.gms:play-services-location:20.0.0'
 
 }

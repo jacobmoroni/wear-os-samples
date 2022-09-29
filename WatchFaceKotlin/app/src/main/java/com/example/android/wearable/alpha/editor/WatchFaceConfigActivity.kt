@@ -15,10 +15,17 @@
  */
 package com.example.android.wearable.alpha.editor
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
 import com.example.android.wearable.alpha.databinding.ActivityWatchFaceConfigBinding
@@ -27,12 +34,17 @@ import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Comp
 import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MINIMUM_FOR_SLIDER
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.OnTokenCanceledListener
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
- * Allows user to edit certain parts of the watch face (color style, ticks displayed, minute arm
+ * Allows user to edit certain parts of the watch face (color style, sunrise location, minute arm
  * length) by using the [WatchFaceConfigStateHolder]. (All widgets are disabled until data is
  * loaded.)
  */
@@ -45,17 +57,21 @@ class WatchFaceConfigActivity : ComponentActivity() {
     }
 
     private lateinit var binding: ActivityWatchFaceConfigBinding
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate()")
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         binding = ActivityWatchFaceConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         // Disable widgets until data loads and values are set.
         binding.colorStylePickerButton.isEnabled = false
-        binding.ticksEnabledSwitch.isEnabled = false
+        binding.sunriseLocationButton.isEnabled = false
         binding.minuteHandLengthSlider.isEnabled = false
 
         // Set max and min.
@@ -87,6 +103,7 @@ class WatchFaceConfigActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun updateWatchFacePreview(
         userStylesAndPreview: WatchFaceConfigStateHolder.UserStylesAndPreview
     ) {
@@ -95,7 +112,9 @@ class WatchFaceConfigActivity : ComponentActivity() {
         val colorStyleId: String = userStylesAndPreview.colorStyleId
         Log.d(TAG, "\tselected color style: $colorStyleId")
 
-        binding.ticksEnabledSwitch.isChecked = userStylesAndPreview.ticksEnabled
+        binding.locationLabel.text = "${userStylesAndPreview.sunriseLat.format(3)}, ${
+            userStylesAndPreview.sunriseLon.format(3)
+        }"
         binding.minuteHandLengthSlider.value = userStylesAndPreview.minuteHandLength
         binding.preview.watchFaceBackground.setImageBitmap(userStylesAndPreview.previewImage)
 
@@ -104,7 +123,7 @@ class WatchFaceConfigActivity : ComponentActivity() {
 
     private fun enabledWidgets() {
         binding.colorStylePickerButton.isEnabled = true
-        binding.ticksEnabledSwitch.isEnabled = true
+        binding.sunriseLocationButton.isEnabled = true
         binding.minuteHandLengthSlider.isEnabled = true
     }
 
@@ -117,11 +136,8 @@ class WatchFaceConfigActivity : ComponentActivity() {
         val newColorStyle: ColorStyleIdAndResourceIds = colorStyleIdAndResourceIdsList.random()
 
         stateHolder.setColorStyle(newColorStyle.id)
-    }
-
-    fun onClickUpdateLocation(view: View) {
-        Log.d(TAG, "onClickUpdateLocation() $view")
-        // TODO (jacob) get lat lon info here and update the sunrise/ sunset
+        binding.colorStylePickerButton.setBackgroundColor(resources.getColor(newColorStyle.primaryColorId))
+        binding.colorStylePickerButton.setTextColor(resources.getColor(newColorStyle.backgroundColorId))
     }
 
     fun onClickLeftComplicationButton(view: View) {
@@ -134,12 +150,92 @@ class WatchFaceConfigActivity : ComponentActivity() {
         stateHolder.setComplication(RIGHT_COMPLICATION_ID)
     }
 
-    fun onClickTicksEnabledSwitch(view: View) {
-        Log.d(TAG, "onClickTicksEnabledSwitch() $view")
-        stateHolder.setDrawPips(binding.ticksEnabledSwitch.isChecked)
+    @SuppressLint("SetTextI18n")
+    fun onClickSunriseLocationButton(view: View) {
+        // TODO: This is failing sometimes. Not sure what lets it work and what makes it fail
+        //  Last known always works, but not sure if that is enough
+        Log.d(TAG, "onClickSunriseLocationButton() $view")
+        binding.locationLabel.text = "Updating ..."
+        if (ActivityCompat.checkSelfPermission(this,
+                                               Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Location permission not granted")
+            AlertDialog.Builder(this)
+                .setTitle("Location Permission Needed")
+                .setMessage("This only requests permission once when Update Location button is pressed")
+                .setPositiveButton(
+                    "OK"
+                ) { _, _ ->
+                    //Prompt the user once explanation has been shown
+                    ActivityCompat.requestPermissions(this,
+                                                      arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                                                      MY_PERMISSIONS_REQUEST_LOCATION)
+                }
+                .create()
+                .show()
+            binding.locationLabel.text = "Try Again"
+            return
+        }
+
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY,
+                                               object : CancellationToken() {
+                                                   override fun onCanceledRequested(p0: OnTokenCanceledListener) =
+                                                       CancellationTokenSource().token
+
+                                                   override fun isCancellationRequested() = false
+                                               }).addOnSuccessListener { location: Location? ->
+            if (location != null) {
+                setLocation(location)
+            } else {
+                Toast.makeText(this,
+                               "Cannot get location. Requesting Last Known",
+                               Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "Current location null")
+                fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation: Location? ->
+                    if (lastLocation != null) {
+                        setLocation(lastLocation)
+                    } else {
+                        Toast.makeText(this, "Failed Again, try again later", Toast.LENGTH_SHORT)
+                            .show()
+                        Log.d(TAG, "last known location null")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
+    private fun Float.format(digits: Int) = "%.${digits}f".format(this)
+
+    @SuppressLint("SetTextI18n")
+    private fun setLocation(location: Location) {
+        val locationString = "${location.latitude.format(3)}, ${location.longitude.format(3)}"
+        binding.locationLabel.text = locationString
+        Log.d(TAG, "Location Set: $locationString")
+        stateHolder.setSunriseLat(location.latitude)
+        stateHolder.setSunriseLon(location.longitude)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            MY_PERMISSIONS_REQUEST_LOCATION -> {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Location request granted")
+                } else {
+                    Log.d(TAG, "Location request denied")
+                }
+                return
+            }
+        }
     }
 
     companion object {
         const val TAG = "WatchFaceConfigActivity"
+        private const val MY_PERMISSIONS_REQUEST_LOCATION = 99
     }
 }
