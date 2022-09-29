@@ -26,7 +26,7 @@ import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Comp
 import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MAXIMUM_FOR_SLIDER
 import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MINIMUM_FOR_SLIDER
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
-//import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
+import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -121,7 +121,7 @@ class WatchFaceConfigActivity : ComponentActivity() {
 
     fun onClickUpdateLocation(view: View) {
         Log.d(TAG, "onClickUpdateLocation() $view")
-        // TODO (jacob) get lat lon info here and update the sunrise/ sunset and moon phase
+        // TODO (jacob) get lat lon info here and update the sunrise/ sunset
     }
 
     fun onClickLeftComplicationButton(view: View) {
@@ -129,10 +129,10 @@ class WatchFaceConfigActivity : ComponentActivity() {
         stateHolder.setComplication(LEFT_COMPLICATION_ID)
     }
 
-//    fun onClickRightComplicationButton(view: View) {
-//        Log.d(TAG, "onClickRightComplicationButton() $view")
-//        stateHolder.setComplication(RIGHT_COMPLICATION_ID)
-//    }
+    fun onClickRightComplicationButton(view: View) {
+        Log.d(TAG, "onClickRightComplicationButton() $view")
+        stateHolder.setComplication(RIGHT_COMPLICATION_ID)
+    }
 
     fun onClickTicksEnabledSwitch(view: View) {
         Log.d(TAG, "onClickTicksEnabledSwitch() $view")

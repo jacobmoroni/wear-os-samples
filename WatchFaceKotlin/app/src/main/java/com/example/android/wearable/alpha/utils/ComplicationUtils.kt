@@ -38,11 +38,11 @@ import com.example.android.wearable.alpha.R
 private const val LEFT_AND_RIGHT_COMPLICATIONS_TOP_BOUND = 0.78f
 private const val LEFT_AND_RIGHT_COMPLICATIONS_BOTTOM_BOUND = 1.0f
 
-private const val LEFT_COMPLICATION_LEFT_BOUND = 0.26f
-private const val LEFT_COMPLICATION_RIGHT_BOUND = 0.48f
+private const val LEFT_COMPLICATION_LEFT_BOUND = 0.24f
+private const val LEFT_COMPLICATION_RIGHT_BOUND = 0.46f
 
-private const val RIGHT_COMPLICATION_LEFT_BOUND = 0.52f
-private const val RIGHT_COMPLICATION_RIGHT_BOUND = 0.74f
+private const val RIGHT_COMPLICATION_LEFT_BOUND = 0.54f
+private const val RIGHT_COMPLICATION_RIGHT_BOUND = 0.76f
 
 private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_red_style
 
