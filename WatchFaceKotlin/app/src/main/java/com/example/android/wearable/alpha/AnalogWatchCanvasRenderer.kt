@@ -94,8 +94,8 @@ class AnalogWatchCanvasRenderer(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     // Represents all data needed to render the watch face. All value defaults are constants. Only
-    // four values are changeable by the user (color scheme, sunrise location (lat and lon), and length of
-    // the minute arm). Those dynamic values are saved in the watch face APIs and we update those
+    // six values are changeable by the user (color scheme, sunrise location (lat and lon), and tide
+    // (region and spot)). Those dynamic values are saved in the watch face APIs and we update those
     // here (in the renderer) through a Kotlin Flow.
     private var watchFaceData: WatchFaceData = WatchFaceData()
 
@@ -183,22 +183,11 @@ class AnalogWatchCanvasRenderer(
                         sunriseLon = doubleValue.value.toFloat()
                     )
                 }
-                WATCH_HAND_LENGTH_STYLE_SETTING -> {
-                    val doubleValue = options.value as
-                        UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
-
-                    // The arm lengths are usually only calculated the first time the watch face is
-                    // loaded to reduce the ops in the onDraw(). Because we updated the minute hand
-                    // watch length, we need to trigger a recalculation.
-//                    armLengthChangedRecalculateClockHands = true
-
-                    // Updates length of minute hand based on edits from user.
-                    val newMinuteHandDimensions = newWatchFaceData.minuteHandDimensions.copy(
-                        lengthFraction = doubleValue.value.toFloat()
-                    )
-
+                TIDE_LOCATION_STYLE_SETTING -> {
+                    val stringValue =
+                        options.value as UserStyleSetting.ListUserStyleSetting
                     newWatchFaceData = newWatchFaceData.copy(
-                        minuteHandDimensions = newMinuteHandDimensions
+                        tideLocation = stringValue.toString()
                     )
                 }
             }
@@ -253,7 +242,7 @@ class AnalogWatchCanvasRenderer(
             watchFaceColors.activeBackgroundColor
         }
         if (!initialized) {
-            parseTides()
+            parseTides("9410230", 2022)
             nextTideIdx = findNextTide(zonedDateTime)
             updateActiveTides(zonedDateTime)
             initialized = true
@@ -320,9 +309,9 @@ class AnalogWatchCanvasRenderer(
         .bufferedReader()
         .use { it.readText() }
 
-    private fun parseTides() {
+    private fun parseTides(stationID : String, year : Int) {
         try {
-            val fileName = "tides_2022_npb.txt"
+            val fileName = "tides_${stationID}_${year}.txt"
             val fileContent = context.assets.readFile(fileName)
             val lines = fileContent.split("\n")
             for (i in 20 until lines.size - 1) {
@@ -633,6 +622,7 @@ class AnalogWatchCanvasRenderer(
 
     private fun drawTideAxes(canvas: Canvas, tA: TideRenderArea) {
         val tideAxesPath = Path()
+        framePaint.color = watchFaceColors.activeFrameColor
         framePaint.strokeWidth = watchFaceData.standardFrameWidth * size
         tideAxesPath.moveTo(tA.time0px, tA.lowerLeftPx[1])
         tideAxesPath.lineTo(tA.time0px, tA.upperRightPx[1])
@@ -676,6 +666,7 @@ class AnalogWatchCanvasRenderer(
                                           0.055f * size,
                                           0.01f * size,
                                           nextTideHigh)
+        primaryPaint.color = watchFaceColors.activePrimaryColor
         primaryPaint.style = Paint.Style.FILL
         canvas.drawPath(arrowPath, primaryPaint)
         primaryPaint.style = Paint.Style.STROKE

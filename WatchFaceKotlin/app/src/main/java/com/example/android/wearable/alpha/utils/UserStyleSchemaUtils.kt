@@ -21,9 +21,7 @@ import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.example.android.wearable.alpha.R
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
-import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRACTION_DEFAULT
-import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRACTION_MAXIMUM
-import com.example.android.wearable.alpha.data.watchface.MINUTE_HAND_LENGTH_FRACTION_MINIMUM
+import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
 import com.example.android.wearable.alpha.data.watchface.LAT_MAX
 import com.example.android.wearable.alpha.data.watchface.LAT_MIN
 import com.example.android.wearable.alpha.data.watchface.LAT_DEFAULT
@@ -37,7 +35,7 @@ import com.example.android.wearable.alpha.data.watchface.LON_DEFAULT
 const val COLOR_STYLE_SETTING = "color_style_setting"
 const val SUNRISE_LAT_STYLE_SETTING = "sunrise_lat_style_setting"
 const val SUNRISE_LON_STYLE_SETTING = "sunrise_lon_style_setting"
-const val WATCH_HAND_LENGTH_STYLE_SETTING = "watch_hand_length_style_setting"
+const val TIDE_LOCATION_STYLE_SETTING = "tide_location_style_setting"
 
 /*
  * Creates user styles in the settings activity associated with the watch face, so users can
@@ -87,17 +85,18 @@ fun createUserStyleSchema(context: Context): UserStyleSchema {
         LON_DEFAULT.toDouble(),
     )
 
-    // 4. Allows user to change the length of the minute hand.
-    val watchHandLengthStyleSetting = UserStyleSetting.DoubleRangeUserStyleSetting(
-        UserStyleSetting.Id(WATCH_HAND_LENGTH_STYLE_SETTING),
+    val tideLocationStyleSetting = UserStyleSetting.ListUserStyleSetting(
+        UserStyleSetting.Id(TIDE_LOCATION_STYLE_SETTING),
         context.resources,
-        R.string.watchface_hand_length_setting,
-        R.string.watchface_hand_length_setting_description,
+        R.string.tide_location,
+        R.string.tide_location_description,
         null,
-        MINUTE_HAND_LENGTH_FRACTION_MINIMUM.toDouble(),
-        MINUTE_HAND_LENGTH_FRACTION_MAXIMUM.toDouble(),
-        listOf(WatchFaceLayer.COMPLICATIONS_OVERLAY),
-        MINUTE_HAND_LENGTH_FRACTION_DEFAULT.toDouble()
+        TideLocationResourceIds.toOptionList(context),
+        listOf(
+            WatchFaceLayer.BASE,
+            WatchFaceLayer.COMPLICATIONS,
+            WatchFaceLayer.COMPLICATIONS_OVERLAY
+        )
     )
 
     // 4. Create style settings to hold all options.
@@ -106,7 +105,7 @@ fun createUserStyleSchema(context: Context): UserStyleSchema {
             colorStyleSetting,
             sunriseLatStyleSetting,
             sunriseLonStyleSetting,
-            watchHandLengthStyleSetting
+            tideLocationStyleSetting
         )
     )
 }

@@ -35,7 +35,7 @@ import com.example.android.wearable.alpha.utils.SUNRISE_LAT_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.SUNRISE_LON_STYLE_SETTING
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
-import com.example.android.wearable.alpha.utils.WATCH_HAND_LENGTH_STYLE_SETTING
+import com.example.android.wearable.alpha.utils.TIDE_LOCATION_STYLE_SETTING
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -75,7 +75,7 @@ class WatchFaceConfigStateHolder(
     private lateinit var colorStyleKey: UserStyleSetting.ListUserStyleSetting
     private lateinit var sunriseLatKey: UserStyleSetting.DoubleRangeUserStyleSetting
     private lateinit var sunriseLonKey: UserStyleSetting.DoubleRangeUserStyleSetting
-    private lateinit var minuteHandLengthKey: UserStyleSetting.DoubleRangeUserStyleSetting
+    private lateinit var tideLocationKey: UserStyleSetting.ListUserStyleSetting
 
     val uiState: StateFlow<EditWatchFaceUiState> =
         flow<EditWatchFaceUiState> {
@@ -116,8 +116,8 @@ class WatchFaceConfigStateHolder(
                 SUNRISE_LON_STYLE_SETTING -> {
                     sunriseLonKey = setting as UserStyleSetting.DoubleRangeUserStyleSetting
                 }
-                WATCH_HAND_LENGTH_STYLE_SETTING -> {
-                    minuteHandLengthKey = setting as UserStyleSetting.DoubleRangeUserStyleSetting
+                TIDE_LOCATION_STYLE_SETTING -> {
+                    tideLocationKey = setting as UserStyleSetting.ListUserStyleSetting
                 }
                 // TODO (codingjeremy): Add complication change support if settings activity
                 // PR doesn't cover it. Otherwise, remove comment.
@@ -154,17 +154,17 @@ class WatchFaceConfigStateHolder(
             userStyle[sunriseLatKey] as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
         val sunriseLonStyle =
             userStyle[sunriseLonKey] as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
-        val minuteHandStyle =
-            userStyle[minuteHandLengthKey]
-                as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
+        val tideLocationStyle =
+            userStyle[tideLocationKey]
+                as UserStyleSetting.ListUserStyleSetting.ListOption
 
-        Log.d(TAG, "/new values: $colorStyle, $sunriseLatStyle, $sunriseLonStyle, $minuteHandStyle")
+        Log.d(TAG, "/new values: $colorStyle, $sunriseLatStyle, $sunriseLonStyle, $tideLocationStyle")
 
         return UserStylesAndPreview(
             colorStyleId = colorStyle.id.toString(),
             sunriseLat = sunriseLatStyle.value.toFloat(),
             sunriseLon = sunriseLonStyle.value.toFloat(),
-            minuteHandLength = multiplyByMultipleForSlider(minuteHandStyle.value).toFloat(),
+            tideLocation = tideLocationStyle.id.toString(),
             previewImage = bitmap
         )
     }
@@ -222,13 +222,26 @@ class WatchFaceConfigStateHolder(
         )
     }
 
-    fun setMinuteHandArmLength(newLengthRatio: Float) {
-        val newMinuteHandLengthRatio = newLengthRatio.toDouble() / MULTIPLE_FOR_SLIDER
+    fun setTideLocation(newTideLocaiton: String) {
+        val userStyleSettingList = editorSession.userStyleSchema.userStyleSettings
 
-        setUserStyleOption(
-            minuteHandLengthKey,
-            UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption(newMinuteHandLengthRatio)
-        )
+        // Loops over all UserStyleSettings (basically the keys in the map) to find the setting for
+        // the color style (which contains all the possible options for that style setting).
+        for (userStyleSetting in userStyleSettingList) {
+            if (userStyleSetting.id == UserStyleSetting.Id(TIDE_LOCATION_STYLE_SETTING)) {
+                val tideUserStyleSetting =
+                    userStyleSetting as UserStyleSetting.ListUserStyleSetting
+
+                // Loops over the UserStyleSetting.Option colors (all possible values for the key)
+                // to find the matching option, and if it exists, sets it as the color style.
+                for (regionOptions in tideUserStyleSetting.options) {
+                    if (regionOptions.id.toString() == newTideLocaiton) {
+                        setUserStyleOption(tideLocationKey, regionOptions)
+                        return
+                    }
+                }
+            }
+        }
     }
 
     // Saves User Style Option change back to the back to the EditorSession.
@@ -260,7 +273,7 @@ class WatchFaceConfigStateHolder(
         val colorStyleId: String,
         val sunriseLat: Float,
         val sunriseLon: Float,
-        val minuteHandLength: Float,
+        val tideLocation: String,
         val previewImage: Bitmap
     )
 

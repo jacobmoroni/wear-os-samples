@@ -58,7 +58,9 @@ class WatchFaceConfigActivity : ComponentActivity() {
 
     private lateinit var binding: ActivityWatchFaceConfigBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-
+    private var colorIdx = 0
+    private var tideRegionIdx = 0
+    private var tideSpotIdx = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,17 +74,8 @@ class WatchFaceConfigActivity : ComponentActivity() {
         // Disable widgets until data loads and values are set.
         binding.colorStylePickerButton.isEnabled = false
         binding.sunriseLocationButton.isEnabled = false
-        binding.minuteHandLengthSlider.isEnabled = false
-
-        // Set max and min.
-        binding.minuteHandLengthSlider.valueTo = MINUTE_HAND_LENGTH_MAXIMUM_FOR_SLIDER
-        binding.minuteHandLengthSlider.valueFrom = MINUTE_HAND_LENGTH_MINIMUM_FOR_SLIDER
-        binding.minuteHandLengthSlider.value = MINUTE_HAND_LENGTH_DEFAULT_FOR_SLIDER
-
-        binding.minuteHandLengthSlider.addOnChangeListener { slider, value, fromUser ->
-            Log.d(TAG, "addOnChangeListener(): $slider, $value, $fromUser")
-            stateHolder.setMinuteHandArmLength(value)
-        }
+        binding.tideRegionChangeButton.isEnabled = false
+        binding.tideSpotChangeButton.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.Main.immediate) {
             stateHolder.uiState
@@ -115,7 +108,8 @@ class WatchFaceConfigActivity : ComponentActivity() {
         binding.locationLabel.text = "${userStylesAndPreview.sunriseLat.format(3)}, ${
             userStylesAndPreview.sunriseLon.format(3)
         }"
-        binding.minuteHandLengthSlider.value = userStylesAndPreview.minuteHandLength
+        // TODO: Pipe correct text into here
+        binding.tideLocation.text = "test"
         binding.preview.watchFaceBackground.setImageBitmap(userStylesAndPreview.previewImage)
 
         enabledWidgets()
@@ -124,16 +118,19 @@ class WatchFaceConfigActivity : ComponentActivity() {
     private fun enabledWidgets() {
         binding.colorStylePickerButton.isEnabled = true
         binding.sunriseLocationButton.isEnabled = true
-        binding.minuteHandLengthSlider.isEnabled = true
+        binding.tideRegionChangeButton.isEnabled = true
+        binding.tideSpotChangeButton.isEnabled = true
     }
 
     fun onClickColorStylePickerButton(view: View) {
         Log.d(TAG, "onClickColorStylePickerButton() $view")
 
-        // TODO (codingjeremy): Replace with a RecyclerView to choose color style (next CL)
+        // TODO (jacobolson) cycle through list
         // Selects a random color style from list.
         val colorStyleIdAndResourceIdsList = enumValues<ColorStyleIdAndResourceIds>()
-        val newColorStyle: ColorStyleIdAndResourceIds = colorStyleIdAndResourceIdsList.random()
+        val size = colorStyleIdAndResourceIdsList.size
+        colorIdx = (colorIdx + 1)%size
+        val newColorStyle: ColorStyleIdAndResourceIds = colorStyleIdAndResourceIdsList[colorIdx]
 
         stateHolder.setColorStyle(newColorStyle.id)
         binding.colorStylePickerButton.setBackgroundColor(resources.getColor(newColorStyle.primaryColorId))
@@ -232,6 +229,14 @@ class WatchFaceConfigActivity : ComponentActivity() {
                 return
             }
         }
+    }
+
+    fun onClickRegionChangeButton(view: View){
+
+    }
+
+    fun onClickSpotChangeButton(view: View){
+
     }
 
     companion object {

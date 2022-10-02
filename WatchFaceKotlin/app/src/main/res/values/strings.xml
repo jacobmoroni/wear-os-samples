@@ -45,10 +45,17 @@
     <string name="sunrise_lon_setting">Sunrise Lon</string>
     <string name="sunrise_lat_description">Latitude of sunrise and sunset calculation</string>
     <string name="sunrise_lon_description">Longitude of sunrise and sunset calculation</string>
-    <!-- A menu option to select a widget that lets us configure the length of the watch hands
+    <!-- A menu option to select a widget that lets us configure the tide location
     [CHAR LIMIT=20] -->
     <string name="watchface_hand_length_setting">Minute Hand length</string>
-
+    <string name="tide_location_label">Tide Location:</string>
+    <string name="tide_location_label_description">Tide Location Label</string>
+    <string name="tide_location">Not Set</string>
+    <string name="tide_location_description">Current Tide Location</string>
+    <string name="tide_change_region">Change Region</string>
+    <string name="tide_change_region_description">Change the current tide region</string>
+    <string name="tide_change_spot">Change Spot</string>
+    <string name="tide_change_spot_description">Change the current tide spot</string>
     <!-- Sub title for the menu option to select a widget that lets us configure the length of the
     watch hands -->
     <string name="watchface_hand_length_setting_description">Scale of watch hand</string>
@@ -81,7 +88,7 @@
     <!-- Title for config activity for watch face (settings). -->
     <string name="title_activity_watch_face_config">Configuration</string>
     <!-- Use of "\n" is to conserve horizontal space in config menu. -->
-    <string name="activity_config_color_style_picker_label">Color\nStyle</string>
+    <string name="activity_config_color_style_picker_label">Color Style</string>
     <string name="activity_config_sunrise_location_label">Sunrise/Sunset\nLocation:</string>
     <string name="activity_config_sunrise_update_label">Update</string>
     <string name="activity_config_slider_text_label">Minute Hand Size</string>
