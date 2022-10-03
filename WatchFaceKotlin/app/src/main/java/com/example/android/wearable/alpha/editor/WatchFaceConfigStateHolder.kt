@@ -74,7 +74,7 @@ class WatchFaceConfigStateHolder(
     private lateinit var sunriseLatKey: UserStyleSetting.DoubleRangeUserStyleSetting
     private lateinit var sunriseLonKey: UserStyleSetting.DoubleRangeUserStyleSetting
     private lateinit var tideRegionKey: UserStyleSetting.LongRangeUserStyleSetting
-    private lateinit var tideLocationKey: UserStyleSetting.LongRangeUserStyleSetting
+    private lateinit var tideSpotKey: UserStyleSetting.LongRangeUserStyleSetting
 
     val uiState: StateFlow<EditWatchFaceUiState> =
         flow<EditWatchFaceUiState> {
@@ -119,7 +119,7 @@ class WatchFaceConfigStateHolder(
                     tideRegionKey = setting as UserStyleSetting.LongRangeUserStyleSetting
                 }
                 TIDE_SPOT_STYLE_SETTING -> {
-                    tideLocationKey = setting as UserStyleSetting.LongRangeUserStyleSetting
+                    tideSpotKey = setting as UserStyleSetting.LongRangeUserStyleSetting
                 }
                 // TODO (codingjeremy): Add complication change support if settings activity
                 // PR doesn't cover it. Otherwise, remove comment.
@@ -158,17 +158,17 @@ class WatchFaceConfigStateHolder(
             userStyle[sunriseLonKey] as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
         val tideRegionStyle =
             userStyle[tideRegionKey] as UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption
-        val tideLocationStyle =
-            userStyle[tideLocationKey] as UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption
+        val tideSpotStyle =
+            userStyle[tideSpotKey] as UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption
 
-        Log.d(TAG, "/new values: $colorStyle, $sunriseLatStyle, $sunriseLonStyle, $tideRegionStyle, $tideLocationStyle")
+        Log.d(TAG, "/new values: $colorStyle, $sunriseLatStyle, $sunriseLonStyle, $tideRegionStyle, $tideSpotStyle")
 
         return UserStylesAndPreview(
             colorStyleId = colorStyle.id.toString(),
             sunriseLat = sunriseLatStyle.value.toFloat(),
             sunriseLon = sunriseLonStyle.value.toFloat(),
             tideRegionIdx = tideRegionStyle.value,
-            tideLocationIdx = tideLocationStyle.value,
+            tideSpotIdx = tideSpotStyle.value,
             previewImage = bitmap
         )
     }
@@ -233,9 +233,9 @@ class WatchFaceConfigStateHolder(
         )
     }
 
-    fun setTideLocationIdx(location: Long) {
+    fun setTideSpotIdx(location: Long) {
         setUserStyleOption(
-            tideLocationKey,
+            tideSpotKey,
             UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption(location)
         )
     }
@@ -270,7 +270,7 @@ class WatchFaceConfigStateHolder(
         val sunriseLat: Float,
         val sunriseLon: Float,
         val tideRegionIdx: Long,
-        val tideLocationIdx: Long,
+        val tideSpotIdx: Long,
         val previewImage: Bitmap
     )
 

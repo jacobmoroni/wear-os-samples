@@ -31,6 +31,9 @@ const val LOCATION_IDX_MIN = 0L
 const val LOCATION_IDX_MAX = 100L
 const val LOCATION_IDX_DEFAULT = 0L
 
+const val MAX_TIDE_DEFAULT = 6.0f
+const val MIN_TIDE_DEFAULT = -2.0f
+
 private const val SECOND_HAND_LENGTH_FRACTION = 0.37383f
 private const val SECOND_HAND_WIDTH_FRACTION = 0.00934f
 
@@ -57,9 +60,11 @@ data class WatchFaceData(
     val sunriseLat: Float = LAT_DEFAULT,
     val sunriseLon: Float = LON_DEFAULT,
     var tideRegionIdx: Long = REGION_IDX_DEFAULT,
-    var tideLocationIdx: Long = LOCATION_IDX_DEFAULT,
+    var tideSpotIdx: Long = LOCATION_IDX_DEFAULT,
     var tideRegion: TideLocationResourceIds = TideLocationResourceIds.WEST_COAST,
-    var tideLocation: Pair<String, String> = Pair("Newport Beach, CA", "9410583"),
+    var tideSpot: Pair<String, String> = Pair("Newport Beach, CA", "9410583"),
+    val maxTide: Float = MAX_TIDE_DEFAULT,
+    val minTide: Float = MIN_TIDE_DEFAULT,
     val centerCircleDiameterFraction: Float = CENTER_CIRCLE_DIAMETER_FRACTION,
     val numberRadiusFraction: Float = NUMBER_RADIUS_FRACTION,
     val outerCircleStokeWidthFraction: Float = OUTER_CIRCLE_STROKE_WIDTH_FRACTION,

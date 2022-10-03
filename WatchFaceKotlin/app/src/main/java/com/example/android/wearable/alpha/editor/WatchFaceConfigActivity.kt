@@ -106,10 +106,12 @@ class WatchFaceConfigActivity : ComponentActivity() {
         binding.locationLabel.text = "${userStylesAndPreview.sunriseLat.format(3)}, ${
             userStylesAndPreview.sunriseLon.format(3)
         }"
+        tideRegionIdx = userStylesAndPreview.tideRegionIdx.toInt()
+        tideSpotIdx = userStylesAndPreview.tideSpotIdx.toInt()
         val tideRegion = enumValues<TideLocationResourceIds>()[tideRegionIdx]
-        val tideLocation : String = tideRegion.locations[tideSpotIdx]
+        val tideSpot : String = tideRegion.locations[tideSpotIdx]
         binding.tideRegion.text = tideRegion.regionName
-        binding.tideLocation.text = tideLocation
+        binding.tideSpot.text = tideSpot
         binding.preview.watchFaceBackground.setImageBitmap(userStylesAndPreview.previewImage)
 
         enabledWidgets()
@@ -239,12 +241,11 @@ class WatchFaceConfigActivity : ComponentActivity() {
         tideRegionIdx = (tideRegionIdx + 1)%size
         val newTideRegion: TideLocationResourceIds = tideStyleIdAndResourceIdsList[tideRegionIdx]
         tideSpotIdx = 0
-        val tideLocation : String = newTideRegion.locations[tideSpotIdx]
-        Log.d(TAG, "tide info: region changed: r$tideRegionIdx, loc$tideSpotIdx")
+        val tideSpot : String = newTideRegion.locations[tideSpotIdx]
         stateHolder.setTideRegionIdx(tideRegionIdx.toLong())
-        stateHolder.setTideLocationIdx(tideSpotIdx.toLong())
+        stateHolder.setTideSpotIdx(tideSpotIdx.toLong())
         binding.tideRegion.text = newTideRegion.regionName
-        binding.tideLocation.text = tideLocation
+        binding.tideSpot.text = tideSpot
     }
 
     fun onClickSpotChangeButton(view: View){
@@ -255,9 +256,8 @@ class WatchFaceConfigActivity : ComponentActivity() {
         val size = tideRegion.locations.size
         tideSpotIdx = (tideSpotIdx + 1)%size
         val newTideSpot = tideRegion.locations[tideSpotIdx]
-        Log.d(TAG, "tide info: location changed: r$tideRegionIdx, loc$tideSpotIdx")
-        stateHolder.setTideLocationIdx(tideSpotIdx.toLong())
-        binding.tideLocation.text = newTideSpot
+        stateHolder.setTideSpotIdx(tideSpotIdx.toLong())
+        binding.tideSpot.text = newTideSpot
     }
 
     companion object {

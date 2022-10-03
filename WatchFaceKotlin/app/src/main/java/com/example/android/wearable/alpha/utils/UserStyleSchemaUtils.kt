@@ -107,8 +107,8 @@ fun createUserStyleSchema(context: Context): UserStyleSchema {
     val tideSpotStyleSetting = UserStyleSetting.LongRangeUserStyleSetting(
         UserStyleSetting.Id(TIDE_SPOT_STYLE_SETTING),
         context.resources,
-        R.string.tide_location,
-        R.string.tide_location_description,
+        R.string.tide_spot,
+        R.string.tide_spot_description,
         null,
         LOCATION_IDX_MIN,
         LOCATION_IDX_MAX,

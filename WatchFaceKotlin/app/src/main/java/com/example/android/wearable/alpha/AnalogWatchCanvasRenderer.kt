@@ -170,7 +170,6 @@ class AnalogWatchCanvasRenderer(
                         )
                     )
                 }
-                // TODO: Replace These settings with new settings (Lat Lon, Tide Location, Tide Color ...)
                 SUNRISE_LAT_STYLE_SETTING -> {
                     val doubleValue =
                         options.value as UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
@@ -205,8 +204,8 @@ class AnalogWatchCanvasRenderer(
         newWatchFaceData = newWatchFaceData.copy(
             tideRegion = region,
             tideRegionIdx = tideRegionIdx.toLong(),
-            tideLocation = Pair(region.locations[tideSpotIdx], region.ids[tideSpotIdx]),
-            tideLocationIdx = tideSpotIdx.toLong()
+            tideSpot = Pair(region.locations[tideSpotIdx], region.ids[tideSpotIdx]),
+            tideSpotIdx = tideSpotIdx.toLong()
         )
         // Only updates if something changed.
         if (watchFaceData != newWatchFaceData) {
@@ -219,7 +218,6 @@ class AnalogWatchCanvasRenderer(
                 watchFaceData.ambientColorStyle
             )
 
-            // TODO: This will either go away or turn into the step count section
             // Applies the user chosen complication color scheme changes. ComplicationDrawables for
             // each of the styles are defined in XML so we need to replace the complication's
             // drawables.
@@ -231,6 +229,7 @@ class AnalogWatchCanvasRenderer(
                     (complication.renderer as CanvasComplicationDrawable).drawable = it
                 }
             }
+            initialized = false
         }
     }
 
@@ -257,7 +256,11 @@ class AnalogWatchCanvasRenderer(
             watchFaceColors.activeBackgroundColor
         }
         if (!initialized) {
-            parseTides("9410230", 2022)
+            if (zonedDateTime.monthValue != 12){
+                parseTides(watchFaceData.tideSpot.second, zonedDateTime.year)
+            } else {
+                parseTides(watchFaceData.tideSpot.second, zonedDateTime.year, zonedDateTime.year + 1)
+            }
             nextTideIdx = findNextTide(zonedDateTime)
             updateActiveTides(zonedDateTime)
             initialized = true
@@ -265,7 +268,7 @@ class AnalogWatchCanvasRenderer(
         // TODO: Pull out all calculations and only run them when necessary
         updateSize(bounds)
         canvas.drawColor(backgroundColor)
-        Log.d(TAG, "tide info: ${watchFaceData.tideRegion.regionName}, ${watchFaceData.tideLocation.first}, ${watchFaceData.tideLocation.second},")
+        Log.d(TAG, "tide info: ${watchFaceData.tideRegion.regionName}, ${watchFaceData.tideSpot.first}, ${watchFaceData.tideSpot.second}")
         // This is to try to save battery by rendering less. Not sure if I can get it working
 //        if (zonedDateTime.second != prevZdt.second) {
 //
@@ -324,7 +327,7 @@ class AnalogWatchCanvasRenderer(
         .bufferedReader()
         .use { it.readText() }
 
-    private fun parseTides(stationID : String, year : Int) {
+    private fun parseTides(stationID : String, year : Int, year2: Int = 0) {
         try {
             val fileName = "tides_${stationID}_${year}.txt"
             val fileContent = context.assets.readFile(fileName)
@@ -346,8 +349,31 @@ class AnalogWatchCanvasRenderer(
                 val highLow: Boolean = line[8].contains("H")
                 tideList.add(Pair(timestamp, Pair(tide, highLow)))
             }
+            if (year2 != 0) {
+                Log.d(TAG, "tides loading second year...")
+                val fileName2 = "tides_${stationID}_${year}.txt"
+                val fileContent2 = context.assets.readFile(fileName2)
+                val lines2 = fileContent2.split("\n")
+                for (i in 20 until lines2.size - 1) {
+                    val line = lines2[i].split(" ", "\t")
+                    // [Date, Day, time, height_ft, , height_cm, , , H/L]
+                    val date = line[0].split("/")
+                    val time = line[2].split(":")
+                    val timestamp: ZonedDateTime = ZonedDateTime.of(date[0].toInt(),
+                        date[1].toInt(),
+                        date[2].toInt(),
+                        time[0].toInt(),
+                        time[1].toInt(),
+                        0,
+                        0,
+                        ZoneId.of("UTC"))
+                    val tide: Float = line[3].toFloat()
+                    val highLow: Boolean = line[8].contains("H")
+                    tideList.add(Pair(timestamp, Pair(tide, highLow)))
+                }
+            }
         } catch (e: Exception) {
-            Log.d("this", "tides loading exception: $e")
+            Log.d(TAG, "tides loading exception: $e")
         }
     }
 

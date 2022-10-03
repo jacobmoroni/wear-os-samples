@@ -52,8 +52,8 @@
     <string name="tide_location_label_description">Tide Location Label</string>
     <string name="tide_region">Not Set</string>
     <string name="tide_region_description">Current Tide Region</string>
-    <string name="tide_location">Not Set</string>
-    <string name="tide_location_description">Current Tide Location</string>
+    <string name="tide_spot">Not Set</string>
+    <string name="tide_spot_description">Current Tide Location</string>
     <string name="tide_change_region">Change Region</string>
     <string name="tide_change_region_description">Change the current tide region</string>
     <string name="tide_change_spot">Change Spot</string>

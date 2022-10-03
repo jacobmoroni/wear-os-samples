@@ -4,6 +4,7 @@ This class pulls the tide info from tidesandcurrents.noaa.gov
 """
 import sys
 import subprocess
+import time
 
 
 class TideGrabber:
@@ -27,6 +28,9 @@ class TideGrabber:
             self.file_name = f"tides_{self.station_id}_{self.year}.txt"
             self.pullTide()
             self.checkResult()
+        elif len(sys.argv) == 2:
+            if sys.argv[1] != "auto":
+                self.printHelp()
         else:
             self.printHelp()
 
@@ -34,7 +38,8 @@ class TideGrabber:
         """
         Prints a helper string to show how to use the function
         """
-        print("To run this script: python3 tide_grabber.py <Station ID> <year>")
+        print("To run this script: python3 tide_grabber.py <Station ID> <year> or python3 tide_grabber.py auto")
+        print("If 'auto' argument passed in, it will automatically load designated tides")
         print("Station ID can be found by visiting https://tidesandcurrents.noaa.gov/map/index.html?type=TidePredictions&region=, then selecting the desired location")
         print("Years available are the current year +/- 2 years")
         print("Example for Balboa Pier, Newport Beach 2023: python3 tide_grabber.py 9410583 2023")
@@ -55,7 +60,7 @@ class TideGrabber:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            # text=True,
             shell=True
         )
         std_out, std_err = process.communicate()
@@ -76,4 +81,21 @@ class TideGrabber:
 
 
 if __name__ == "__main__":
-    TideGrabber()
+    tg = TideGrabber()
+    if len(sys.argv) == 2 and sys.argv[1] == "auto":
+        tide_spots = ["9410583", # Newport Beach, CA
+                      "TWC0419", # Oceanside, CA
+                      "9410230", # La Jolla, CA
+                      "8512354", # Long Island, NY
+                      "8533071", # Seaside Heights, NJ
+                      "8652226", # Outer Banks, NC
+                      "8721649"] # Cocoa Beach, FL
+        current_year = time.gmtime().tm_year
+        for spot in tide_spots:
+            for year in range(current_year, current_year + 5):
+                tg.station_id = spot
+                tg.year = year
+                tg.file_name = f"tides_{tg.station_id}_{tg.year}.txt"
+                # print(tg.file_name)
+                tg.pullTide()
+                tg.checkResult()

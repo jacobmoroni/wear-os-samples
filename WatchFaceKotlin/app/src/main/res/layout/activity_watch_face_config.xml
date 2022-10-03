@@ -69,6 +69,7 @@
             android:id="@+id/color_style_picker_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            style="@style/Widget.WatchFace.Button"
             android:padding="@dimen/no_padding"
             android:gravity="center"
             android:onClick="onClickColorStylePickerButton"
@@ -110,6 +111,7 @@
             android:id="@+id/sunrise_location_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            style="@style/Widget.WatchFace.Button"
             android:padding="@dimen/no_padding"
             android:gravity="center"
             android:onClick="onClickSunriseLocationButton"
@@ -155,14 +157,14 @@
             app:layout_constraintTop_toBottomOf="@+id/tide_label" />
 
         <TextView
-            android:id="@+id/tide_location"
+            android:id="@+id/tide_spot"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="@string/tide_location"
+            android:text="@string/tide_spot"
             android:textColor="@color/white"
             android:textAppearance="?attr/textAppearanceButton"
-            android:contentDescription="@string/tide_location_description"
+            android:contentDescription="@string/tide_spot_description"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tide_region" />
@@ -171,6 +173,7 @@
             android:id="@+id/tide_region_change_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            style="@style/Widget.WatchFace.Button"
             android:padding="@dimen/no_padding"
             android:gravity="center"
             android:onClick="onClickRegionChangeButton"
@@ -179,12 +182,13 @@
             android:contentDescription="@string/tide_change_region_description"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tide_location" />
+            app:layout_constraintTop_toBottomOf="@+id/tide_spot" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/tide_spot_change_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            style="@style/Widget.WatchFace.Button"
             android:padding="@dimen/no_padding"
             android:gravity="center"
             android:onClick="onClickSpotChangeButton"
