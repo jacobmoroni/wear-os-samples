@@ -10,48 +10,34 @@ enum class TideLocationResourceIds(
     val regionName: String
 ) {
     WEST_COAST(
-        locations = arrayOf("Newport Beach", "Oceanside", "La Jolla"),
+        locations = arrayOf("Newport Beach, CA", "Oceanside, CA", "La Jolla, CA"),
         ids = arrayOf("9410583", "TWC0419", "9410230"),
-        regionName = "west_coast"
+        regionName = "West Coast"
     ),
 
     EAST_COAST(
         locations = arrayOf("Long Island, NY", "Seaside Heights, NJ", "Outer Banks, NC", "Cocoa Beach, FL"),
         ids = arrayOf("8512354", "8533071", "8652226", "8721649"),
-        regionName = "east_coast"
+        regionName = "East Coast"
     );
 
     companion object {
-        /**
-         * Translates the string id to the correct region object.
-         */
-        fun getTideLocation(regionName: String, idx: Int): String {
-            val region = when (regionName) {
-                TideLocationResourceIds.WEST_COAST.regionName -> TideLocationResourceIds.WEST_COAST
-                TideLocationResourceIds.EAST_COAST.regionName -> TideLocationResourceIds.EAST_COAST
+        fun getTideRegion(idx: Int) : TideLocationResourceIds {
+            return when (idx) {
+                0 -> TideLocationResourceIds.WEST_COAST
+                1 -> TideLocationResourceIds.EAST_COAST
                 else -> TideLocationResourceIds.WEST_COAST
             }
-            return region.locations[idx]
         }
 
         /**
-         * Returns a list of [UserStyleSetting.ListUserStyleSetting.ListOption] for all
-         * TideLocationResourceIds enums. The watch face settings APIs use this to set up
-         * options for the user to select a style.
+         * Translates the string id to the correct region object.
          */
-        fun toOptionList(context: Context): List<UserStyleSetting.ListUserStyleSetting.ListOption> {
-            val colorStyleIdAndResourceIdsList = enumValues<ColorStyleIdAndResourceIds>()
-
-            return colorStyleIdAndResourceIdsList.map { colorStyleIdAndResourceIds ->
-                UserStyleSetting.ListUserStyleSetting.ListOption(
-                    UserStyleSetting.Option.Id(colorStyleIdAndResourceIds.id),
-                    context.resources,
-                    colorStyleIdAndResourceIds.nameResourceId,
-                    Icon.createWithResource(
-                        context,
-                        colorStyleIdAndResourceIds.iconResourceId
-                    )
-                )
+        fun getTideLocation(region: TideLocationResourceIds, idx: Int): Pair<String, String> {
+            if (idx < region.locations.size){
+                return Pair(region.locations[idx], region.ids[idx])
+            } else {
+                return Pair("Null", "Null")
             }
         }
     }

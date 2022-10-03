@@ -50,6 +50,8 @@
     <string name="watchface_hand_length_setting">Minute Hand length</string>
     <string name="tide_location_label">Tide Location:</string>
     <string name="tide_location_label_description">Tide Location Label</string>
+    <string name="tide_region">Not Set</string>
+    <string name="tide_region_description">Current Tide Region</string>
     <string name="tide_location">Not Set</string>
     <string name="tide_location_description">Current Tide Location</string>
     <string name="tide_change_region">Change Region</string>

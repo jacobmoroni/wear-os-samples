@@ -28,10 +28,8 @@ import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
+import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
 import com.example.android.wearable.alpha.databinding.ActivityWatchFaceConfigBinding
-import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_DEFAULT_FOR_SLIDER
-import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MAXIMUM_FOR_SLIDER
-import com.example.android.wearable.alpha.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MINIMUM_FOR_SLIDER
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -108,8 +106,10 @@ class WatchFaceConfigActivity : ComponentActivity() {
         binding.locationLabel.text = "${userStylesAndPreview.sunriseLat.format(3)}, ${
             userStylesAndPreview.sunriseLon.format(3)
         }"
-        // TODO: Pipe correct text into here
-        binding.tideLocation.text = "test"
+        val tideRegion = enumValues<TideLocationResourceIds>()[tideRegionIdx]
+        val tideLocation : String = tideRegion.locations[tideSpotIdx]
+        binding.tideRegion.text = tideRegion.regionName
+        binding.tideLocation.text = tideLocation
         binding.preview.watchFaceBackground.setImageBitmap(userStylesAndPreview.previewImage)
 
         enabledWidgets()
@@ -232,11 +232,32 @@ class WatchFaceConfigActivity : ComponentActivity() {
     }
 
     fun onClickRegionChangeButton(view: View){
+        Log.d(TAG, "onClickRegionChangeButton() $view")
 
+        val tideStyleIdAndResourceIdsList = enumValues<TideLocationResourceIds>()
+        val size = tideStyleIdAndResourceIdsList.size
+        tideRegionIdx = (tideRegionIdx + 1)%size
+        val newTideRegion: TideLocationResourceIds = tideStyleIdAndResourceIdsList[tideRegionIdx]
+        tideSpotIdx = 0
+        val tideLocation : String = newTideRegion.locations[tideSpotIdx]
+        Log.d(TAG, "tide info: region changed: r$tideRegionIdx, loc$tideSpotIdx")
+        stateHolder.setTideRegionIdx(tideRegionIdx.toLong())
+        stateHolder.setTideLocationIdx(tideSpotIdx.toLong())
+        binding.tideRegion.text = newTideRegion.regionName
+        binding.tideLocation.text = tideLocation
     }
 
     fun onClickSpotChangeButton(view: View){
+        Log.d(TAG, "onClickSpotChangeButton() $view")
 
+        val tideStyleIdAndResourceIdsList = enumValues<TideLocationResourceIds>()
+        val tideRegion: TideLocationResourceIds = tideStyleIdAndResourceIdsList[tideRegionIdx]
+        val size = tideRegion.locations.size
+        tideSpotIdx = (tideSpotIdx + 1)%size
+        val newTideSpot = tideRegion.locations[tideSpotIdx]
+        Log.d(TAG, "tide info: location changed: r$tideRegionIdx, loc$tideSpotIdx")
+        stateHolder.setTideLocationIdx(tideSpotIdx.toLong())
+        binding.tideLocation.text = newTideSpot
     }
 
     companion object {

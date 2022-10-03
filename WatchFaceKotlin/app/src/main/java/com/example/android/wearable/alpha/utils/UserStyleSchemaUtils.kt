@@ -28,6 +28,12 @@ import com.example.android.wearable.alpha.data.watchface.LAT_DEFAULT
 import com.example.android.wearable.alpha.data.watchface.LON_MAX
 import com.example.android.wearable.alpha.data.watchface.LON_MIN
 import com.example.android.wearable.alpha.data.watchface.LON_DEFAULT
+import com.example.android.wearable.alpha.data.watchface.REGION_IDX_MIN
+import com.example.android.wearable.alpha.data.watchface.REGION_IDX_MAX
+import com.example.android.wearable.alpha.data.watchface.REGION_IDX_DEFAULT
+import com.example.android.wearable.alpha.data.watchface.LOCATION_IDX_MIN
+import com.example.android.wearable.alpha.data.watchface.LOCATION_IDX_MAX
+import com.example.android.wearable.alpha.data.watchface.LOCATION_IDX_DEFAULT
 
 // Keys to matched content in the  the user style settings. We listen for changes to these
 // values in the renderer and if new, we will update the database and update the watch face
@@ -35,7 +41,8 @@ import com.example.android.wearable.alpha.data.watchface.LON_DEFAULT
 const val COLOR_STYLE_SETTING = "color_style_setting"
 const val SUNRISE_LAT_STYLE_SETTING = "sunrise_lat_style_setting"
 const val SUNRISE_LON_STYLE_SETTING = "sunrise_lon_style_setting"
-const val TIDE_LOCATION_STYLE_SETTING = "tide_location_style_setting"
+const val TIDE_REGION_STYLE_SETTING = "tide_region_style_setting"
+const val TIDE_SPOT_STYLE_SETTING = "tide_spot_style_setting"
 
 /*
  * Creates user styles in the settings activity associated with the watch face, so users can
@@ -85,18 +92,28 @@ fun createUserStyleSchema(context: Context): UserStyleSchema {
         LON_DEFAULT.toDouble(),
     )
 
-    val tideLocationStyleSetting = UserStyleSetting.ListUserStyleSetting(
-        UserStyleSetting.Id(TIDE_LOCATION_STYLE_SETTING),
+    val tideRegionStyleSetting = UserStyleSetting.LongRangeUserStyleSetting(
+        UserStyleSetting.Id(TIDE_REGION_STYLE_SETTING),
+        context.resources,
+        R.string.tide_region,
+        R.string.tide_region_description,
+        null,
+        REGION_IDX_MIN,
+        REGION_IDX_MAX,
+        listOf(WatchFaceLayer.BASE),
+        REGION_IDX_DEFAULT,
+    )
+
+    val tideSpotStyleSetting = UserStyleSetting.LongRangeUserStyleSetting(
+        UserStyleSetting.Id(TIDE_SPOT_STYLE_SETTING),
         context.resources,
         R.string.tide_location,
         R.string.tide_location_description,
         null,
-        TideLocationResourceIds.toOptionList(context),
-        listOf(
-            WatchFaceLayer.BASE,
-            WatchFaceLayer.COMPLICATIONS,
-            WatchFaceLayer.COMPLICATIONS_OVERLAY
-        )
+        LOCATION_IDX_MIN,
+        LOCATION_IDX_MAX,
+        listOf(WatchFaceLayer.BASE),
+        LOCATION_IDX_DEFAULT,
     )
 
     // 4. Create style settings to hold all options.
@@ -105,7 +122,9 @@ fun createUserStyleSchema(context: Context): UserStyleSchema {
             colorStyleSetting,
             sunriseLatStyleSetting,
             sunriseLonStyleSetting,
-            tideLocationStyleSetting
-        )
+            tideSpotStyleSetting,
+            tideRegionStyleSetting
+
+            )
     )
 }

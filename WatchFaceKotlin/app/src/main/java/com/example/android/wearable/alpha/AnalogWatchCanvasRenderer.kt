@@ -34,6 +34,7 @@ import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
+import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
 import com.example.android.wearable.alpha.data.watchface.WatchFaceColorPalette.Companion.convertToWatchFaceColorPalette
 import com.example.android.wearable.alpha.data.watchface.WatchFaceData
 import com.example.android.wearable.alpha.utils.*
@@ -154,7 +155,8 @@ class AnalogWatchCanvasRenderer(
         Log.d(TAG, "updateWatchFace(): $userStyle")
 
         var newWatchFaceData: WatchFaceData = watchFaceData
-
+        var tideRegionIdx = 0
+        var tideSpotIdx = 0
         // Loops through user style and applies new values to watchFaceData.
         for (options in userStyle) {
             when (options.key.id.toString()) {
@@ -183,16 +185,29 @@ class AnalogWatchCanvasRenderer(
                         sunriseLon = doubleValue.value.toFloat()
                     )
                 }
-                TIDE_LOCATION_STYLE_SETTING -> {
-                    val stringValue =
-                        options.value as UserStyleSetting.ListUserStyleSetting
-                    newWatchFaceData = newWatchFaceData.copy(
-                        tideLocation = stringValue.toString()
-                    )
+                TIDE_REGION_STYLE_SETTING -> {
+                    val longValue =
+                        options.value as UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption
+                    val region =  TideLocationResourceIds.getTideRegion(longValue.value.toInt())
+                    tideRegionIdx = longValue.value.toInt()
+                }
+                TIDE_SPOT_STYLE_SETTING -> {
+                    val longValue =
+                        options.value as UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption
+                    tideSpotIdx = longValue.value.toInt()
                 }
             }
         }
-
+        val region = TideLocationResourceIds.getTideRegion(tideRegionIdx)
+        if (region.locations.size <= tideSpotIdx){
+            tideSpotIdx = 0
+        }
+        newWatchFaceData = newWatchFaceData.copy(
+            tideRegion = region,
+            tideRegionIdx = tideRegionIdx.toLong(),
+            tideLocation = Pair(region.locations[tideSpotIdx], region.ids[tideSpotIdx]),
+            tideLocationIdx = tideSpotIdx.toLong()
+        )
         // Only updates if something changed.
         if (watchFaceData != newWatchFaceData) {
             watchFaceData = newWatchFaceData
@@ -250,7 +265,7 @@ class AnalogWatchCanvasRenderer(
         // TODO: Pull out all calculations and only run them when necessary
         updateSize(bounds)
         canvas.drawColor(backgroundColor)
-
+        Log.d(TAG, "tide info: ${watchFaceData.tideRegion.regionName}, ${watchFaceData.tideLocation.first}, ${watchFaceData.tideLocation.second},")
         // This is to try to save battery by rendering less. Not sure if I can get it working
 //        if (zonedDateTime.second != prevZdt.second) {
 //
