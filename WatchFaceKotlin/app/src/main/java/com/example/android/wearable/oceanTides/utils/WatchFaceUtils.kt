@@ -1,4 +1,4 @@
-package com.example.android.wearable.alpha.utils
+package com.example.android.wearable.oceanTides.utils
 
 import android.content.res.AssetManager
 import android.graphics.Path

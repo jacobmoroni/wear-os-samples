@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha.data.watchface
+package com.example.android.wearable.oceanTides.data.watchface
 
 const val LAT_DEFAULT = 40.297119f
 const val LAT_MAX = 90.0f
@@ -58,7 +58,7 @@ class TideRenderArea() {
 }
 
 /**
- * Represents all data needed to render an analog watch face.
+ * Represents all data needed to render the ocean tides watch face.
  */
 data class WatchFaceData(
     val activeColorStyle: ColorStyleIdAndResourceIds = ColorStyleIdAndResourceIds.RED,

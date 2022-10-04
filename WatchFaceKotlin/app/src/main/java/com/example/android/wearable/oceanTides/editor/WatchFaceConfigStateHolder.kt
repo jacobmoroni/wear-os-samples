@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha.editor
+package com.example.android.wearable.oceanTides.editor
 
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -27,13 +27,13 @@ import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import com.example.android.wearable.alpha.utils.COLOR_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.SUNRISE_LAT_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.SUNRISE_LON_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
-import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
-import com.example.android.wearable.alpha.utils.TIDE_REGION_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.TIDE_SPOT_STYLE_SETTING
+import com.example.android.wearable.oceanTides.utils.COLOR_STYLE_SETTING
+import com.example.android.wearable.oceanTides.utils.SUNRISE_LAT_STYLE_SETTING
+import com.example.android.wearable.oceanTides.utils.SUNRISE_LON_STYLE_SETTING
+import com.example.android.wearable.oceanTides.utils.LEFT_COMPLICATION_ID
+import com.example.android.wearable.oceanTides.utils.RIGHT_COMPLICATION_ID
+import com.example.android.wearable.oceanTides.utils.TIDE_REGION_STYLE_SETTING
+import com.example.android.wearable.oceanTides.utils.TIDE_SPOT_STYLE_SETTING
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted

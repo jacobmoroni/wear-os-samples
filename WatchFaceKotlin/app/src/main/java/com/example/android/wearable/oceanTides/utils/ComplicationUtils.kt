@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha.utils
+package com.example.android.wearable.oceanTides.utils
 
 import android.content.Context
 import android.graphics.Rect
@@ -29,7 +29,7 @@ import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.rendering.CanvasComplicationDrawable
 import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
-import com.example.android.wearable.alpha.R
+import com.example.android.wearable.oceanTides.R
 
 // Information needed for complications.
 // Creates bounds for the locations of both right and left complications. (This is the

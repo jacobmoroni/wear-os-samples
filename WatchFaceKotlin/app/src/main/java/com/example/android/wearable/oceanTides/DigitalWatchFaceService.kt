@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha
+package com.example.android.wearable.oceanTides
 
 import android.util.Log
 import android.view.SurfaceHolder
@@ -25,15 +25,15 @@ import androidx.wear.watchface.WatchFaceType
 import androidx.wear.watchface.WatchState
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyleSchema
-import com.example.android.wearable.alpha.utils.createComplicationSlotManager
-import com.example.android.wearable.alpha.utils.createUserStyleSchema
+import com.example.android.wearable.oceanTides.utils.createComplicationSlotManager
+import com.example.android.wearable.oceanTides.utils.createUserStyleSchema
 
 /**
  * Handles much of the boilerplate needed to implement a watch face (minus rendering code; see
- * [AnalogWatchCanvasRenderer]) including the complications and settings (styles user can change on
+ * [OceanTidesCanvasRenderer]) including the complications and settings (styles user can change on
  * the watch face).
  */
-class AnalogWatchFaceService : WatchFaceService() {
+class DigitalWatchFaceService : WatchFaceService() {
 
     // Used by Watch Face APIs to construct user setting options and repository.
     override fun createUserStyleSchema(): UserStyleSchema =
@@ -57,7 +57,7 @@ class AnalogWatchFaceService : WatchFaceService() {
         Log.d(TAG, "createWatchFace()")
 
         // Creates class that renders the watch face.
-        val renderer = AnalogWatchCanvasRenderer(
+        val renderer = OceanTidesCanvasRenderer(
             context = applicationContext,
             surfaceHolder = surfaceHolder,
             watchState = watchState,
@@ -74,6 +74,6 @@ class AnalogWatchFaceService : WatchFaceService() {
     }
 
     companion object {
-        const val TAG = "AnalogWatchFaceService"
+        const val TAG = "DigitalWatchFaceService"
     }
 }

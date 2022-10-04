@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha.utils
+package com.example.android.wearable.oceanTides.utils
 
 import android.content.Context
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import com.example.android.wearable.alpha.R
-import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
-import com.example.android.wearable.alpha.data.watchface.LAT_MAX
-import com.example.android.wearable.alpha.data.watchface.LAT_MIN
-import com.example.android.wearable.alpha.data.watchface.LAT_DEFAULT
-import com.example.android.wearable.alpha.data.watchface.LON_MAX
-import com.example.android.wearable.alpha.data.watchface.LON_MIN
-import com.example.android.wearable.alpha.data.watchface.LON_DEFAULT
-import com.example.android.wearable.alpha.data.watchface.REGION_IDX_MIN
-import com.example.android.wearable.alpha.data.watchface.REGION_IDX_MAX
-import com.example.android.wearable.alpha.data.watchface.REGION_IDX_DEFAULT
-import com.example.android.wearable.alpha.data.watchface.LOCATION_IDX_MIN
-import com.example.android.wearable.alpha.data.watchface.LOCATION_IDX_MAX
-import com.example.android.wearable.alpha.data.watchface.LOCATION_IDX_DEFAULT
+import com.example.android.wearable.oceanTides.R
+import com.example.android.wearable.oceanTides.data.watchface.ColorStyleIdAndResourceIds
+import com.example.android.wearable.oceanTides.data.watchface.LAT_MAX
+import com.example.android.wearable.oceanTides.data.watchface.LAT_MIN
+import com.example.android.wearable.oceanTides.data.watchface.LAT_DEFAULT
+import com.example.android.wearable.oceanTides.data.watchface.LON_MAX
+import com.example.android.wearable.oceanTides.data.watchface.LON_MIN
+import com.example.android.wearable.oceanTides.data.watchface.LON_DEFAULT
+import com.example.android.wearable.oceanTides.data.watchface.REGION_IDX_MIN
+import com.example.android.wearable.oceanTides.data.watchface.REGION_IDX_MAX
+import com.example.android.wearable.oceanTides.data.watchface.REGION_IDX_DEFAULT
+import com.example.android.wearable.oceanTides.data.watchface.LOCATION_IDX_MIN
+import com.example.android.wearable.oceanTides.data.watchface.LOCATION_IDX_MAX
+import com.example.android.wearable.oceanTides.data.watchface.LOCATION_IDX_DEFAULT
 
 // Keys to matched content in the  the user style settings. We listen for changes to these
 // values in the renderer and if new, we will update the database and update the watch face

@@ -15,7 +15,7 @@
   limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.android.wearable.alpha">
+    package="com.example.android.wearable.oceanTides">
 
     <!-- Required for complications to receive complication data and open the provider chooser. -->
     <uses-feature android:name="android.hardware.type.watch" />
@@ -43,7 +43,7 @@
             android:value="true" />
 
         <service
-            android:name=".AnalogWatchFaceService"
+            android:name=".DigitalWatchFaceService"
             android:directBootAware="true"
             android:exported="true"
             android:label="@string/analog_watch_face_name"

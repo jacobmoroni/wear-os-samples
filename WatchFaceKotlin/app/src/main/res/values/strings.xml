@@ -15,9 +15,9 @@
      limitations under the License.
 -->
 <resources>
-    <string name="app_name" translatable="false">WatchFace Alpha (Kotlin)</string>
+    <string name="app_name" translatable="false">OceanTides3.0</string>
 
-    <string name="analog_watch_face_name" translatable="false">Alpha Analog</string>
+    <string name="analog_watch_face_name" translatable="false">Ocean Tides 3.0</string>
 
     <!-- Name of watchface style category for selecting the color theme [CHAR LIMIT=20] -->
     <string name="colors_style_setting">Colors</string>
@@ -47,20 +47,16 @@
     <string name="sunrise_lon_description">Longitude of sunrise and sunset calculation</string>
     <!-- A menu option to select a widget that lets us configure the tide location
     [CHAR LIMIT=20] -->
-    <string name="watchface_hand_length_setting">Minute Hand length</string>
     <string name="tide_location_label">Tide Location:</string>
     <string name="tide_location_label_description">Tide Location Label</string>
-    <string name="tide_region">Not Set</string>
+    <string name="tide_region">Tide Region</string>
     <string name="tide_region_description">Current Tide Region</string>
-    <string name="tide_spot">Not Set</string>
+    <string name="tide_spot">Tide Spot</string>
     <string name="tide_spot_description">Current Tide Location</string>
     <string name="tide_change_region">Change Region</string>
     <string name="tide_change_region_description">Change the current tide region</string>
     <string name="tide_change_spot">Change Spot</string>
     <string name="tide_change_spot_description">Change the current tide spot</string>
-    <!-- Sub title for the menu option to select a widget that lets us configure the length of the
-    watch hands -->
-    <string name="watchface_hand_length_setting_description">Scale of watch hand</string>
 
     <!-- A menu option to select a widget that lets us configure the Complications (a watch
     making term) [CHAR LIMIT=20] -->

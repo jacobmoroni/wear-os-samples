@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha.editor
+package com.example.android.wearable.oceanTides.editor
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -27,12 +27,12 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
-import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
-import com.example.android.wearable.alpha.databinding.ActivityWatchFaceConfigBinding
-import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
-import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
-import com.example.android.wearable.alpha.utils.format
+import com.example.android.wearable.oceanTides.data.watchface.ColorStyleIdAndResourceIds
+import com.example.android.wearable.oceanTides.data.watchface.TideLocationResourceIds
+import com.example.android.wearable.oceanTides.databinding.ActivityWatchFaceConfigBinding
+import com.example.android.wearable.oceanTides.utils.LEFT_COMPLICATION_ID
+import com.example.android.wearable.oceanTides.utils.RIGHT_COMPLICATION_ID
+import com.example.android.wearable.oceanTides.utils.format
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority

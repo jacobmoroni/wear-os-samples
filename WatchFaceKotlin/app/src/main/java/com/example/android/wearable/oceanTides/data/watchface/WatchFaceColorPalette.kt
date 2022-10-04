@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha.data.watchface
+package com.example.android.wearable.oceanTides.data.watchface
 
 import android.content.Context
 import androidx.annotation.DrawableRes

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.android.wearable.alpha
+package com.example.android.wearable.oceanTides
 
 import android.content.Context
 import android.content.Intent
@@ -32,12 +32,12 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
-import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
-import com.example.android.wearable.alpha.data.watchface.TideRenderArea
-import com.example.android.wearable.alpha.data.watchface.WatchFaceColorPalette.Companion.convertToWatchFaceColorPalette
-import com.example.android.wearable.alpha.data.watchface.WatchFaceData
-import com.example.android.wearable.alpha.utils.*
+import com.example.android.wearable.oceanTides.data.watchface.ColorStyleIdAndResourceIds
+import com.example.android.wearable.oceanTides.data.watchface.TideLocationResourceIds
+import com.example.android.wearable.oceanTides.data.watchface.TideRenderArea
+import com.example.android.wearable.oceanTides.data.watchface.WatchFaceColorPalette.Companion.convertToWatchFaceColorPalette
+import com.example.android.wearable.oceanTides.data.watchface.WatchFaceData
+import com.example.android.wearable.oceanTides.utils.*
 import java.lang.Exception
 import java.time.Duration
 import java.time.ZoneId
@@ -54,7 +54,7 @@ private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
  * Renders watch face via data in Room database. Also, updates watch face state based on setting
  * changes by user via [userStyleRepository.addUserStyleListener()].
  */
-class AnalogWatchCanvasRenderer(
+class OceanTidesCanvasRenderer(
     private val context: Context,
     surfaceHolder: SurfaceHolder,
     watchState: WatchState,
@@ -211,7 +211,7 @@ class AnalogWatchCanvasRenderer(
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy()")
-        scope.cancel("AnalogWatchCanvasRenderer scope clear() request")
+        scope.cancel("OceanTidesCanvasRenderer scope clear() request")
         super.onDestroy()
     }
 
@@ -323,13 +323,17 @@ class AnalogWatchCanvasRenderer(
 
     private fun parseTides(stationID: String, year: Int, year2: Int = 0): Boolean {
         try {
-            if (year == 2020) {
-                // This is kind of a hack. When changing the watch face settings, the year is 2020.
+            var badYear = false
+            var yearTemp = year
+            if (yearTemp < 2022) {
+                // This is kind of a hack. When changing the watch face settings, the year is
+                // 2020 or 1998.
                 // I don't have any tides for that year. So if that year comes up,
-                // just exit and wait for an update with the real year
-                return false
+                // just load some tides and wait flag to reload correctly
+                badYear = true
+                yearTemp = 2022
             }
-            val fileName = "tides_${stationID}_${year}.txt"
+            val fileName = "tides_${stationID}_${yearTemp}.txt"
             val fileContent = context.assets.readFile(fileName)
             val lines = fileContent.split("\n")
             Log.d(TAG, "Tides Loading: ${lines[3]} ${lines[4]}")
@@ -360,7 +364,7 @@ class AnalogWatchCanvasRenderer(
             }
             if (year2 != 0) {
                 Log.d(TAG, "tides loading second year...")
-                val fileName2 = "tides_${stationID}_${year}.txt"
+                val fileName2 = "tides_${stationID}_${year2}.txt"
                 val fileContent2 = context.assets.readFile(fileName2)
                 val lines2 = fileContent2.split("\n")
                 for (i in 20 until lines2.size - 1) {
@@ -381,8 +385,7 @@ class AnalogWatchCanvasRenderer(
                     tideList.add(Pair(timestamp, Pair(tide, highLow)))
                 }
             }
-            Log.d(TAG, "num tides: ${tideList.size}")
-            return true
+            return !badYear
         } catch (e: Exception) {
             Log.d(TAG, "tides loading exception: $e")
             return false
@@ -400,13 +403,13 @@ class AnalogWatchCanvasRenderer(
 
     private fun updateActiveTides(zdt: ZonedDateTime) {
         if (nextTideIdx <= 2) {
-            if (nextTideIdx == -1) {
-                activeTides[0] = Pair(-16f, Pair(-2f, false))
-                activeTides[1] = Pair(-8f, Pair(6f, true))
-                activeTides[2] = Pair(0f, Pair(-2f, false))
-                activeTides[3] = Pair(8f, Pair(6f, true))
-                activeTides[4] = Pair(16f, Pair(-2f, false))
-                activeTides[5] = Pair(24f, Pair(6f, true))
+            if (nextTideIdx <= 0) {
+                activeTides[0] = Pair(-16f, Pair(-1f, false))
+                activeTides[1] = Pair(-8f, Pair(5f, true))
+                activeTides[2] = Pair(0f, Pair(1f, false))
+                activeTides[3] = Pair(8f, Pair(3f, true))
+                activeTides[4] = Pair(16f, Pair(-1f, false))
+                activeTides[5] = Pair(24f, Pair(4f, true))
                 nextTideIdx = 0
             }
             initialized = false
@@ -1011,6 +1014,6 @@ class AnalogWatchCanvasRenderer(
     }
 
     companion object {
-        private const val TAG = "AnalogWatchCanvasRenderer"
+        private const val TAG = "OceanTidesCanvasRenderer"
     }
 }

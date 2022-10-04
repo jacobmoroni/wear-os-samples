@@ -1,4 +1,4 @@
-package com.example.android.wearable.alpha.data.watchface
+package com.example.android.wearable.oceanTides.data.watchface
 
 enum class TideLocationResourceIds(
     val locations: Array<String>,
