@@ -32,6 +32,7 @@ import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
 import com.example.android.wearable.alpha.databinding.ActivityWatchFaceConfigBinding
 import com.example.android.wearable.alpha.utils.LEFT_COMPLICATION_ID
 import com.example.android.wearable.alpha.utils.RIGHT_COMPLICATION_ID
+import com.example.android.wearable.alpha.utils.format
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -109,6 +110,9 @@ class WatchFaceConfigActivity : ComponentActivity() {
         tideRegionIdx = userStylesAndPreview.tideRegionIdx.toInt()
         tideSpotIdx = userStylesAndPreview.tideSpotIdx.toInt()
         val tideRegion = enumValues<TideLocationResourceIds>()[tideRegionIdx]
+        if (tideSpotIdx >= tideRegion.locations.size){
+            tideSpotIdx = 0
+        }
         val tideSpot : String = tideRegion.locations[tideSpotIdx]
         binding.tideRegion.text = tideRegion.regionName
         binding.tideSpot.text = tideSpot
@@ -201,9 +205,6 @@ class WatchFaceConfigActivity : ComponentActivity() {
             }
         }
     }
-
-    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
-    private fun Float.format(digits: Int) = "%.${digits}f".format(this)
 
     @SuppressLint("SetTextI18n")
     private fun setLocation(location: Location) {

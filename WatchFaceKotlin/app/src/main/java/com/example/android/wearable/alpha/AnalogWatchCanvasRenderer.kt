@@ -18,7 +18,6 @@ package com.example.android.wearable.alpha
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.AssetManager
 import android.graphics.*
 import android.os.BatteryManager
 import android.util.Log
@@ -35,6 +34,7 @@ import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
 import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
+import com.example.android.wearable.alpha.data.watchface.TideRenderArea
 import com.example.android.wearable.alpha.data.watchface.WatchFaceColorPalette.Companion.convertToWatchFaceColorPalette
 import com.example.android.wearable.alpha.data.watchface.WatchFaceData
 import com.example.android.wearable.alpha.utils.*
@@ -49,29 +49,6 @@ import kotlinx.coroutines.*
 
 // Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
-
-class TideRenderArea() {
-    var lowerLeftPx = floatArrayOf(0f, 0f)
-    var upperRightPx = floatArrayOf(0f, 0f)
-    var minHour = 0f
-    var maxHour = 0f
-    var minTide = 0f
-    var maxTide = 0f
-    var numHours = 0f
-    var hourUnit = 0f
-    var time0px = 0f
-    var numFeet = 0f
-    var footUnit = 0f
-    var tide0px = 0f
-    fun updateValues() {
-        numHours = maxHour - minHour
-        hourUnit = (upperRightPx[0] - lowerLeftPx[0]) / (numHours - 1)
-        time0px = lowerLeftPx[0] - minHour * hourUnit
-        numFeet = maxTide - minTide
-        footUnit = (upperRightPx[1] - lowerLeftPx[1]) / numFeet
-        tide0px = lowerLeftPx[1] - minTide * footUnit
-    }
-}
 
 /**
  * Renders watch face via data in Room database. Also, updates watch face state based on setting
@@ -133,7 +110,7 @@ class AnalogWatchCanvasRenderer(
     // valid dimensions from the system.
     private var currentWatchFaceSize = Rect(0, 0, 0, 0)
     private var size = 0f // Width of the watch face
-    private var prevZdt: ZonedDateTime = ZonedDateTime.now();
+    private var prevZdt: ZonedDateTime = ZonedDateTime.now()
     private val tideList = Vector<Pair<ZonedDateTime, Pair<Float, Boolean>>>()
     private var activeTides = arrayOfNulls<Pair<Float, Pair<Float, Boolean>>>(6)
     private var nextTideIdx = 0
@@ -187,7 +164,6 @@ class AnalogWatchCanvasRenderer(
                 TIDE_REGION_STYLE_SETTING -> {
                     val longValue =
                         options.value as UserStyleSetting.LongRangeUserStyleSetting.LongRangeOption
-                    val region =  TideLocationResourceIds.getTideRegion(longValue.value.toInt())
                     tideRegionIdx = longValue.value.toInt()
                 }
                 TIDE_SPOT_STYLE_SETTING -> {
@@ -198,7 +174,7 @@ class AnalogWatchCanvasRenderer(
             }
         }
         val region = TideLocationResourceIds.getTideRegion(tideRegionIdx)
-        if (region.locations.size <= tideSpotIdx){
+        if (region.locations.size <= tideSpotIdx) {
             tideSpotIdx = 0
         }
         newWatchFaceData = newWatchFaceData.copy(
@@ -256,66 +232,58 @@ class AnalogWatchCanvasRenderer(
             watchFaceColors.activeBackgroundColor
         }
         if (!initialized) {
-            if (zonedDateTime.monthValue != 12){
-                parseTides(watchFaceData.tideSpot.second, zonedDateTime.year)
-            } else {
-                parseTides(watchFaceData.tideSpot.second, zonedDateTime.year, zonedDateTime.year + 1)
-            }
-            nextTideIdx = findNextTide(zonedDateTime)
-            updateActiveTides(zonedDateTime)
-            initialized = true
+            initializeWatchFaceState(zonedDateTime, bounds)
         }
         // TODO: Pull out all calculations and only run them when necessary
         updateSize(bounds)
         canvas.drawColor(backgroundColor)
-        Log.d(TAG, "tide info: ${watchFaceData.tideRegion.regionName}, ${watchFaceData.tideSpot.first}, ${watchFaceData.tideSpot.second}")
         // This is to try to save battery by rendering less. Not sure if I can get it working
 //        if (zonedDateTime.second != prevZdt.second) {
 //
 //        }
         if (zonedDateTime.minute != prevZdt.minute) {
-            if (Duration.between(zonedDateTime, tideList[nextTideIdx].first).isNegative) {
+            if (nextTideIdx == -1 || Duration.between(zonedDateTime,
+                                                      tideList[nextTideIdx].first).isNegative) {
                 nextTideIdx = findNextTide(zonedDateTime)
             }
             updateActiveTides(zonedDateTime)
         }
+        if (zonedDateTime.hour != prevZdt.hour) {
+            watchFaceData.sunriseTime = calculateSunriseAndSunset(zonedDateTime,
+                                                                  watchFaceData.sunriseLat,
+                                                                  watchFaceData.sunriseLon,
+                                                                  true)
+            watchFaceData.sunsetTime = calculateSunriseAndSunset(zonedDateTime,
+                                                                 watchFaceData.sunriseLat,
+                                                                 watchFaceData.sunriseLon,
+                                                                 false)
+            watchFaceData.moonPhase = calculateMoonPhase(zonedDateTime)
+
+        }
         prevZdt = zonedDateTime
 
-
+        // Draw time and date even if ambient mode
         drawTime(canvas, zonedDateTime)
         drawDayAndDate(canvas, zonedDateTime)
 
         if (renderParameters.drawMode == DrawMode.INTERACTIVE &&
             renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)
         ) {
-            //Tide Grid
-            val tideArea = TideRenderArea()
-            tideArea.lowerLeftPx = floatArrayOf(0f, 0.3f * size)
-            tideArea.upperRightPx = floatArrayOf(0.8f * size, 0.1f * size)
-            tideArea.minHour = -4f
-            tideArea.maxHour = 16f
-            tideArea.minTide = -2f
-            tideArea.maxTide = 6f
-            tideArea.updateValues()
-            drawGrid(canvas, tideArea)
-            val sunriseTime = calculateSunriseAndSunset(zonedDateTime,
-                                                        watchFaceData.sunriseLat,
-                                                        watchFaceData.sunriseLon,
-                                                        true)
-            val sunsetTime = calculateSunriseAndSunset(zonedDateTime,
-                                                       watchFaceData.sunriseLat,
-                                                       watchFaceData.sunriseLon,
-                                                       false)
-            val moonPhase = calculateMoonPhase(zonedDateTime)
-            drawSunriseAndSunsetTime(canvas, sunriseTime, sunsetTime)
+            // Draw when interactive is enabled. (Not ambient)
+            drawGrid(canvas, watchFaceData.tideArea)
+            drawSunriseAndSunsetTime(canvas, watchFaceData.sunriseTime, watchFaceData.sunsetTime)
             //            drawBatteryPercent(canvas)
             //            drawStepCount(canvas)
-            drawDaylightBlock(canvas, zonedDateTime, tideArea, sunriseTime, sunsetTime)
-            drawTides(canvas, tideArea)
-            drawTideAxes(canvas, tideArea)
+            drawDaylightBlock(canvas,
+                              zonedDateTime,
+                              watchFaceData.tideArea,
+                              watchFaceData.sunriseTime,
+                              watchFaceData.sunsetTime)
+            drawTides(canvas, watchFaceData.tideArea)
+            drawTideAxes(canvas, watchFaceData.tideArea)
             drawTideInfo(canvas, zonedDateTime)
             drawMoonFrame(canvas)
-            drawMoonPhase(canvas, moonPhase)
+            drawMoonPhase(canvas, watchFaceData.moonPhase)
             drawFrame(canvas)
             drawLogos(canvas)
             drawComplications(canvas, zonedDateTime)
@@ -323,15 +291,51 @@ class AnalogWatchCanvasRenderer(
 
     }
 
-    private fun AssetManager.readFile(fileName: String) = open(fileName)
-        .bufferedReader()
-        .use { it.readText() }
+    private fun initializeWatchFaceState(zdt: ZonedDateTime, bounds: Rect) {
+        val success = if (zdt.monthValue == 12 && zdt.dayOfMonth > 15) {
+            parseTides(watchFaceData.tideSpot.second, zdt.year, zdt.year + 1)
+        } else if (zdt.monthValue == 1 && zdt.dayOfMonth < 5) {
+            parseTides(watchFaceData.tideSpot.second, zdt.year - 1, zdt.year)
+        } else {
+            parseTides(watchFaceData.tideSpot.second, zdt.year)
+        }
+        nextTideIdx = findNextTide(zdt)
+        updateActiveTides(zdt)
+        updateSize(bounds)
+        watchFaceData.tideArea.lowerLeftPx = floatArrayOf(0f, 0.3f * size)
+        watchFaceData.tideArea.upperRightPx = floatArrayOf(0.8f * size, 0.1f * size)
+        watchFaceData.tideArea.minHour = -4f
+        watchFaceData.tideArea.maxHour = 16f
+        watchFaceData.tideArea.minTide = floor(watchFaceData.tideArea.minTide)
+        watchFaceData.tideArea.maxTide = ceil(watchFaceData.tideArea.maxTide)
+        watchFaceData.tideArea.updateValues()
+        watchFaceData.sunriseTime = calculateSunriseAndSunset(zdt,
+                                                              watchFaceData.sunriseLat,
+                                                              watchFaceData.sunriseLon,
+                                                              true)
+        watchFaceData.sunsetTime = calculateSunriseAndSunset(zdt,
+                                                             watchFaceData.sunriseLat,
+                                                             watchFaceData.sunriseLon,
+                                                             false)
+        watchFaceData.moonPhase = calculateMoonPhase(zdt)
+        initialized = success
+    }
 
-    private fun parseTides(stationID : String, year : Int, year2: Int = 0) {
+    private fun parseTides(stationID: String, year: Int, year2: Int = 0): Boolean {
         try {
+            if (year == 2020) {
+                // This is kind of a hack. When changing the watch face settings, the year is 2020.
+                // I don't have any tides for that year. So if that year comes up,
+                // just exit and wait for an update with the real year
+                return false
+            }
             val fileName = "tides_${stationID}_${year}.txt"
             val fileContent = context.assets.readFile(fileName)
             val lines = fileContent.split("\n")
+            Log.d(TAG, "Tides Loading: ${lines[3]} ${lines[4]}")
+            tideList.clear()
+            watchFaceData.tideArea.minTide = 0f
+            watchFaceData.tideArea.maxTide = 0f
             for (i in 20 until lines.size - 1) {
                 val line = lines[i].split(" ", "\t")
                 // [Date, Day, time, height_ft, , height_cm, , , H/L]
@@ -346,6 +350,11 @@ class AnalogWatchCanvasRenderer(
                                                                 0,
                                                                 ZoneId.of("UTC"))
                 val tide: Float = line[3].toFloat()
+                if (tide > watchFaceData.tideArea.maxTide) {
+                    watchFaceData.tideArea.maxTide = tide
+                } else if (tide < watchFaceData.tideArea.minTide) {
+                    watchFaceData.tideArea.minTide = tide
+                }
                 val highLow: Boolean = line[8].contains("H")
                 tideList.add(Pair(timestamp, Pair(tide, highLow)))
             }
@@ -360,20 +369,23 @@ class AnalogWatchCanvasRenderer(
                     val date = line[0].split("/")
                     val time = line[2].split(":")
                     val timestamp: ZonedDateTime = ZonedDateTime.of(date[0].toInt(),
-                        date[1].toInt(),
-                        date[2].toInt(),
-                        time[0].toInt(),
-                        time[1].toInt(),
-                        0,
-                        0,
-                        ZoneId.of("UTC"))
+                                                                    date[1].toInt(),
+                                                                    date[2].toInt(),
+                                                                    time[0].toInt(),
+                                                                    time[1].toInt(),
+                                                                    0,
+                                                                    0,
+                                                                    ZoneId.of("UTC"))
                     val tide: Float = line[3].toFloat()
                     val highLow: Boolean = line[8].contains("H")
                     tideList.add(Pair(timestamp, Pair(tide, highLow)))
                 }
             }
+            Log.d(TAG, "num tides: ${tideList.size}")
+            return true
         } catch (e: Exception) {
             Log.d(TAG, "tides loading exception: $e")
+            return false
         }
     }
 
@@ -395,6 +407,7 @@ class AnalogWatchCanvasRenderer(
                 activeTides[3] = Pair(8f, Pair(6f, true))
                 activeTides[4] = Pair(16f, Pair(-2f, false))
                 activeTides[5] = Pair(24f, Pair(6f, true))
+                nextTideIdx = 0
             }
             initialized = false
 
@@ -418,174 +431,6 @@ class AnalogWatchCanvasRenderer(
         }
     }
 
-    private fun calculateSunriseAndSunset(zdt: ZonedDateTime,
-                                          lat: Float,
-                                          lon: Float,
-                                          sunrise: Boolean): Float {
-        /*
-        localOffset will be <0 for western hemisphere and >0 for eastern hemisphere
-        */
-        val zenith = -0.83f
-
-        //1. first calculate the day of the year
-        val n1 = floor(275f * zdt.monthValue / 9f)
-        val n2 = floor((zdt.monthValue + 9f) / 12f)
-        val n3 = (1f + floor((zdt.year - 4f * floor(zdt.year / 4f) + 2f) / 3f))
-        val dayOfYear = n1 - (n2 * n3) + zdt.dayOfMonth - 30f
-
-        //2. convert the longitude to hour value and calculate an approximate time
-        val lonHour = lon / 15.0f
-        val t = if (sunrise) {
-            dayOfYear + ((6f - lonHour) / 24f)   //if rising time is desired:
-        } else {
-            dayOfYear + ((18f - lonHour) / 24f)   //if setting time is desired:
-        }
-
-        //3. calculate the Sun's mean anomaly
-        val meanAnomaly = (0.9856f * t) - 3.289f
-
-        //4. calculate the Sun's true longitude
-        val trueLon = (meanAnomaly + (1.916f * sin((Math.PI / 180f) * meanAnomaly)) +
-            (0.020f * sin(2f * (Math.PI / 180f) * meanAnomaly)) + 282.634f).mod(360.0f)
-
-        //5a. calculate the Sun's right ascension
-        var rightAscension =
-            (180f / Math.PI * atan(0.91764f * tan((Math.PI / 180f) * trueLon))).mod(360.0f)
-
-        //5b. right ascension value needs to be in the same quadrant as trueLon
-        val trueLonQuadrant = floor(trueLon / 90f) * 90f
-        val rightAscensionQuadrant = floor(rightAscension / 90f) * 90f
-        rightAscension += (trueLonQuadrant - rightAscensionQuadrant)
-
-        //5c. right ascension value needs to be converted into hours
-        rightAscension /= 15f
-
-        //6. calculate the Sun's declination
-        val sinDec = 0.39782f * sin((Math.PI / 180f) * trueLon)
-        val cosDec = cos(asin(sinDec))
-
-        //7a. calculate the Sun's local hour angle
-        val cosH = (sin((Math.PI / 180f) * zenith) - (sinDec * sin((Math.PI / 180f) * lat))) /
-            (cosDec * cos((Math.PI / 180f) * lat))
-        /*
-        if (cosH >  1)
-        the sun never rises on this location (on the specified date)
-        if (cosH < -1)
-        the sun never sets on this location (on the specified date)
-        */
-
-        //7b. finish calculating local hour angle and convert into hours
-        var localHourAngle = if (sunrise) {
-            360f - (180f / Math.PI) * acos(cosH) // if rising time is desired:
-        } else {
-            (180f / Math.PI) * acos(cosH) // if setting time is desired:
-        }
-        localHourAngle /= 15f
-
-        //8. calculate local mean time of rising/setting
-        val localMeanTime = localHourAngle + rightAscension - (0.06571f * t) - 6.622f
-
-        //9. adjust back to UTC
-        val utcTime = (localMeanTime - lonHour).mod(24.0f)
-
-        //10. convert UT value to local time zone of latitude/longitude
-        val localOffset = zdt.offset.totalSeconds / 60f / 60f
-        val localTime = (utcTime + localOffset + 24.0f).mod(24.0f)
-        return localTime.toFloat()
-    }
-
-    private fun wrapAngle(angle: Double): Double {
-        return angle - 360.0 * floor(angle / 360.0)
-    }
-
-    private fun kepler(m: Double, ecc: Double): Double {
-        //Solve the equation of Kepler.
-        var m_local = m
-        val epsilon = 1e-6f
-        m_local = m_local * Math.PI.toFloat() / 180
-        var e = m_local
-        while (true) {
-            val delta = e - ecc * sin(e) - m_local
-            e -= (delta / (1.0 - ecc * cos(e)))
-            if (abs(delta) <= epsilon) {
-                break
-            }
-        }
-        return e
-    }
-
-    private fun calculateMoonPhase(zdt: ZonedDateTime): Float {
-        //JDN stands for Julian Day Number
-        // might need this in next line: - zdt.offset.totalSeconds /3600.0f
-        val daySegment =
-            ((zdt.hour + (zdt.minute / 60.0) + (zdt.second / 3600.0)
-                - zdt.offset.totalSeconds / 3600.0f) / 24.0)
-        val a = ((zdt.monthValue + 9).toDouble() / 12.0).toInt()
-        val b = (7 * (zdt.year + a).toDouble() / 4.0).toInt()
-        val c = ((275 * (zdt.monthValue)).toDouble() / 9.0).toInt()
-        val julianDatetime =
-            (367 * (zdt.year) - b + c + zdt.dayOfMonth).toDouble() + 1721013.5 + daySegment
-        (367 * (zdt.year) - b + c + zdt.dayOfMonth).toDouble() + 1721013.5 + daySegment
-        //Angles here are in degrees
-        //1980 January 0.0 in JDN
-        //XXX: DateTime(1980).jdn yields 2444239.5 -- which one is right?
-        val epoch = 2444238.5
-
-        //Ecliptic longitude of the Sun at epoch 1980.0
-        val eclipticLongitudeEpoch = 278.833540
-
-        //Ecliptic longitude of the Sun at perigee
-        val eclipticLongitudePerigee = 282.596403
-
-        //Eccentricity of Earth's orbit
-        val eccentricity = 0.016718
-
-        //Elements of the Moon's orbit, epoch 1980.0
-
-        //Moon's mean longitude at the epoch
-        val moonMeanLongitudeEpoch = 64.975464
-        //Mean longitude of the perigee at the epoch
-        val moonMeanPerigeeEpoch = 349.383063
-
-        val day = julianDatetime - epoch
-        //Mean anomaly of the Sun
-        val N = wrapAngle((360 / 365.2422) * day)
-        // Convert from perigee coordinates to epoch 1980
-        val M = wrapAngle(N + eclipticLongitudeEpoch - eclipticLongitudePerigee)
-
-        //Solve Kepler's equation
-        var Ec = kepler(M, eccentricity)
-        Ec = (sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(Ec / 2.0))
-        //True anomaly
-        Ec = (2 * (atan(Ec)) * 180.0 / Math.PI)
-        //Suns's geometric ecliptic longuitude
-        val lambdaSun = wrapAngle(Ec + eclipticLongitudePerigee)
-
-        //Moon's mean longitude
-        val moonLongitude = wrapAngle(13.1763966 * day + moonMeanLongitudeEpoch)
-        //Moon's mean anomaly
-        val MM = wrapAngle(moonLongitude - 0.1114041 * day - moonMeanPerigeeEpoch)
-        val evection = 1.2739 * sin((2 * (moonLongitude - lambdaSun) - MM) * Math.PI / 180.0)
-        //Annual equation
-        val annualEq = 0.1858 * sin((M) * Math.PI / 180)
-        //Correction term
-        val A3 = 0.37 * sin((M) * Math.PI / 180)
-        val MmP = MM + evection - annualEq - A3
-        //Correction for the equation of the center
-        val mEc = 6.2886 * sin((MmP) * Math.PI / 180.0)
-        //Another correction term
-        val A4 = 0.214 * sin((2 * MmP) * Math.PI / 180.0)
-        //Corrected longitude
-        val lP = moonLongitude + evection + mEc - annualEq + A4
-        //Variation
-        val variation = 0.6583 * sin((2 * (lP - lambdaSun)) * Math.PI / 180.0)
-        //True longitude
-        val lPP = lP + variation
-        val moonAge = lPP - lambdaSun
-        val phase = wrapAngle(moonAge) / 360.0f
-        return phase.toFloat()
-    }
-
     // ----- All drawing functions -----
     private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
         for ((_, complication) in complicationSlotsManager.complicationSlots) {
@@ -601,7 +446,7 @@ class AnalogWatchCanvasRenderer(
                                   sunriseTime: Float,
                                   sunsetTime: Float) {
         //draw daylight rectangle
-        val daylightHours = (sunsetTime - sunriseTime + 24f).mod(24f);
+        val daylightHours = (sunsetTime - sunriseTime + 24f).mod(24f)
         val sunriseDiff = (zdt.hour.toFloat() + zdt.minute.toFloat() / 60.0f) - sunriseTime
         tidePaint.strokeCap = Paint.Cap.SQUARE
         tidePaint.color = watchFaceColors.activeDaylightColor
@@ -659,6 +504,7 @@ class AnalogWatchCanvasRenderer(
         gridPaint.style = Paint.Style.FILL
         gridPaint.color = watchFaceColors.activeBackgroundColor
         canvas.drawRect(cleanUpRect, gridPaint)
+        canvas.drawText(watchFaceData.tideSpot.first, 0.25f * size, 0.095f * size, textPaint)
     }
 
     private fun drawTideAxes(canvas: Canvas, tA: TideRenderArea) {
@@ -671,8 +517,6 @@ class AnalogWatchCanvasRenderer(
         tideAxesPath.lineTo(tA.upperRightPx[0], tA.tide0px)
         canvas.drawPath(tideAxesPath, framePaint)
     }
-
-    private fun Float.format(digits: Int) = "%.${digits}f".format(this)
 
     private fun drawTideInfo(canvas: Canvas, zdt: ZonedDateTime) {
         val tidePair = tideList[nextTideIdx]
@@ -714,26 +558,6 @@ class AnalogWatchCanvasRenderer(
         canvas.drawPath(arrowPath, primaryPaint)
     }
 
-    private fun generateArrowPath(baseX: Float,
-                                  baseY: Float,
-                                  height: Float,
-                                  width: Float,
-                                  up: Boolean): Path {
-        val arrowPath = Path()
-        if (up) {
-            arrowPath.moveTo(baseX, baseY)
-            arrowPath.lineTo(baseX, baseY - height)
-            arrowPath.lineTo(baseX - width, baseY - height * 0.55f)
-            arrowPath.lineTo(baseX, baseY - height * 0.55f)
-        } else {
-            arrowPath.moveTo(baseX, baseY - height)
-            arrowPath.lineTo(baseX, baseY)
-            arrowPath.lineTo(baseX - width, baseY - height * 0.45f)
-            arrowPath.lineTo(baseX, baseY - height * 0.45f)
-        }
-        return arrowPath
-    }
-
     private fun drawMoonFrame(canvas: Canvas) {
         val moonFrameBackground = Path()
         framePaint.strokeWidth = watchFaceData.standardFrameWidth * size
@@ -753,17 +577,15 @@ class AnalogWatchCanvasRenderer(
         val moonR = 0.09f * size
         val moonD = moonR * 4f / 3f
         //distance for bezier curves
-        val lineWidth = watchFaceData.standardFrameWidth * size
         primaryPaint.style = Paint.Style.FILL
         val moonCx = 0.8f * size
         val moonCy = 0.2f * size - primaryPaint.strokeWidth / 2
 
         val moonPhasePath = Path()
 
-        var curveX = 0f;
         //Moon phase is a double between 0 and 1. 0 == New moon. then waxes to full moon at 0.5. then wanes to new moon at 1
         if (moonPhase <= 0.5) {
-            curveX = (-moonPhase + 0.25f) * moonD / 0.25f + moonCx
+            val curveX = (-moonPhase + 0.25f) * moonD / 0.25f + moonCx
             val curveY1 = abs(-moonPhase + 0.25f) * moonR / 0.25f + moonCy
             val curveY2 = -abs(-moonPhase + 0.25f) * moonR / 0.25f + moonCy
             moonPhasePath.moveTo(moonCx, moonCy + moonR)
@@ -771,16 +593,16 @@ class AnalogWatchCanvasRenderer(
                                   moonCx + moonD, moonCy - moonR,
                                   moonCx, moonCy - moonR)
             moonPhasePath.cubicTo(curveX, curveY2,
-                                  curveX, curveY1, moonCx, moonCy + moonR);
+                                  curveX, curveY1, moonCx, moonCy + moonR)
         } else {
-            curveX = (-(moonPhase - 0.5f) + 0.25f) * moonD / 0.25f + moonCx
-            val curveY1 = (abs(-(moonPhase - 0.5) + 0.25) * moonR / 0.25 + moonCy).toFloat();
-            val curveY2 = (-abs(-(moonPhase - 0.5f) + 0.25f) * moonR / 0.25f + moonCy);
-            moonPhasePath.moveTo(moonCx, moonCy + moonR);
+            val curveX = (-(moonPhase - 0.5f) + 0.25f) * moonD / 0.25f + moonCx
+            val curveY1 = (abs(-(moonPhase - 0.5) + 0.25) * moonR / 0.25 + moonCy).toFloat()
+            val curveY2 = (-abs(-(moonPhase - 0.5f) + 0.25f) * moonR / 0.25f + moonCy)
+            moonPhasePath.moveTo(moonCx, moonCy + moonR)
             moonPhasePath.cubicTo(moonCx - moonD, moonCy + moonR,
-                                  moonCx - moonD, moonCy - moonR, moonCx, moonCy - moonR);
+                                  moonCx - moonD, moonCy - moonR, moonCx, moonCy - moonR)
             moonPhasePath.cubicTo(curveX, curveY2,
-                                  curveX, curveY1, moonCx, moonCy + moonR);
+                                  curveX, curveY1, moonCx, moonCy + moonR)
         }
         primaryPaint.color = (watchFaceColors.activePrimaryColor)
         canvas.drawPath(moonPhasePath, primaryPaint)
@@ -985,7 +807,7 @@ class AnalogWatchCanvasRenderer(
         textPaint.textSize = .07f * size
         canvas.drawText(amPmString, 0.775f * size, 0.51f * size, textPaint)
         if (!drawAmbient) {
-            drawSeconds(canvas, zonedDateTime, false);
+            drawSeconds(canvas, zonedDateTime, false)
         }
     }
 
@@ -1004,255 +826,6 @@ class AnalogWatchCanvasRenderer(
         val secondFormatter = DateTimeFormatter.ofPattern("ss")
         val secondString = zonedDateTime.format(secondFormatter)
         canvas.drawText(secondString, left, bottom, textPaint)
-    }
-
-    // TODO: This may be helpful for showing how to integrate User defined variables
-//    private fun drawClockHands(
-//        canvas: Canvas,
-//        bounds: Rect,
-//        zonedDateTime: ZonedDateTime
-//    ) {
-//        // Only recalculate bounds (watch face size/surface) has changed or the arm of one of the
-//        // clock hands has changed (via user input in the settings).
-//        // NOTE: Watch face surface usually only updates one time (when the size of the device is
-//        // initially broadcasted).
-//        if (currentWatchFaceSize != bounds || armLengthChangedRecalculateClockHands) {
-//            armLengthChangedRecalculateClockHands = false
-//            currentWatchFaceSize = bounds
-//            recalculateClockHands(bounds)
-//        }
-//
-//        // Retrieve current time to calculate location/rotation of watch arms.
-//        val secondOfDay = zonedDateTime.toLocalTime().toSecondOfDay()
-//
-//        // Determine the rotation of the hour and minute hand.
-//
-//        // Determine how many seconds it takes to make a complete rotation for each hand
-//        // It takes the hour hand 12 hours to make a complete rotation
-//        val secondsPerHourHandRotation = Duration.ofHours(12).seconds
-//        // It takes the minute hand 1 hour to make a complete rotation
-//        val secondsPerMinuteHandRotation = Duration.ofHours(1).seconds
-//
-//        // Determine the angle to draw each hand expressed as an angle in degrees from 0 to 360
-//        // Since each hand does more than one cycle a day, we are only interested in the remainder
-//        // of the secondOfDay modulo the hand interval
-//        val hourRotation = secondOfDay.rem(secondsPerHourHandRotation) * 360.0f /
-//            secondsPerHourHandRotation
-//        val minuteRotation = secondOfDay.rem(secondsPerMinuteHandRotation) * 360.0f /
-//            secondsPerMinuteHandRotation
-//
-//        canvas.withScale(
-//            x = WATCH_HAND_SCALE,
-//            y = WATCH_HAND_SCALE,
-//            pivotX = bounds.exactCenterX(),
-//            pivotY = bounds.exactCenterY()
-//        ) {
-//            val drawAmbient = renderParameters.drawMode == DrawMode.AMBIENT
-//
-//            clockHandPaint.style = if (drawAmbient) Paint.Style.STROKE else Paint.Style.FILL
-//            clockHandPaint.color = if (drawAmbient) {
-//                watchFaceColors.ambientPrimaryColor
-//            } else {
-//                watchFaceColors.activePrimaryColor
-//            }
-//
-//            // Draw hour hand.
-//            withRotation(hourRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
-//                drawPath(hourHandBorder, clockHandPaint)
-//            }
-//
-//            // Draw minute hand.
-//            withRotation(minuteRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
-//                drawPath(minuteHandBorder, clockHandPaint)
-//            }
-//            // Draw second hand if not in ambient mode
-//            if (!drawAmbient) {
-//                clockHandPaint.color = watchFaceColors.activeSecondaryColor
-//
-//                // Second hand has a different color style (secondary color) and is only drawn in
-//                // active mode, so we calculate it here (not above with others).
-//                val secondsPerSecondHandRotation = Duration.ofMinutes(1).seconds
-//                val secondsRotation = secondOfDay.rem(secondsPerSecondHandRotation) * 360.0f /
-//                    secondsPerSecondHandRotation
-//                clockHandPaint.color = watchFaceColors.activeSecondaryColor
-//
-//                withRotation(secondsRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
-//                    drawPath(secondHand, clockHandPaint)
-//                }
-//            }
-//        }
-//    }
-
-//    /*
-//     * Rarely called (only when watch face surface changes; usually only once) from the
-//     * drawClockHands() method.
-//     */
-//    private fun recalculateClockHands(bounds: Rect) {
-//        Log.d(TAG, "recalculateClockHands()")
-//        hourHandBorder =
-//            createClockHand(
-//                bounds,
-//                watchFaceData.hourHandDimensions.lengthFraction,
-//                watchFaceData.hourHandDimensions.widthFraction,
-//                watchFaceData.gapBetweenHandAndCenterFraction,
-//                watchFaceData.hourHandDimensions.xRadiusRoundedCorners,
-//                watchFaceData.hourHandDimensions.yRadiusRoundedCorners
-//            )
-//        hourHandFill = hourHandBorder
-//
-//        minuteHandBorder =
-//            createClockHand(
-//                bounds,
-//                watchFaceData.minuteHandDimensions.lengthFraction,
-//                watchFaceData.minuteHandDimensions.widthFraction,
-//                watchFaceData.gapBetweenHandAndCenterFraction,
-//                watchFaceData.minuteHandDimensions.xRadiusRoundedCorners,
-//                watchFaceData.minuteHandDimensions.yRadiusRoundedCorners
-//            )
-//        minuteHandFill = minuteHandBorder
-//
-//        secondHand =
-//            createClockHand(
-//                bounds,
-//                watchFaceData.secondHandDimensions.lengthFraction,
-//                watchFaceData.secondHandDimensions.widthFraction,
-//                watchFaceData.gapBetweenHandAndCenterFraction,
-//                watchFaceData.secondHandDimensions.xRadiusRoundedCorners,
-//                watchFaceData.secondHandDimensions.yRadiusRoundedCorners
-//            )
-//    }
-
-//    /**
-//     * Returns a round rect clock hand if {@code rx} and {@code ry} equals to 0, otherwise return a
-//     * rect clock hand.
-//     *
-//     * @param bounds The bounds use to determine the coordinate of the clock hand.
-//     * @param length Clock hand's length, in fraction of {@code bounds.width()}.
-//     * @param thickness Clock hand's thickness, in fraction of {@code bounds.width()}.
-//     * @param gapBetweenHandAndCenter Gap between inner side of arm and center.
-//     * @param roundedCornerXRadius The x-radius of the rounded corners on the round-rectangle.
-//     * @param roundedCornerYRadius The y-radius of the rounded corners on the round-rectangle.
-//     */
-//    private fun createClockHand(
-//        bounds: Rect,
-//        length: Float,
-//        thickness: Float,
-//        gapBetweenHandAndCenter: Float,
-//        roundedCornerXRadius: Float,
-//        roundedCornerYRadius: Float
-//    ): Path {
-//        val width = bounds.width()
-//        val centerX = bounds.exactCenterX()
-//        val centerY = bounds.exactCenterY()
-//        val left = centerX - thickness / 2 * width
-//        val top = centerY - (gapBetweenHandAndCenter + length) * width
-//        val right = centerX + thickness / 2 * width
-//        val bottom = centerY - gapBetweenHandAndCenter * width
-//        val path = Path()
-//
-//        if (roundedCornerXRadius != 0.0f || roundedCornerYRadius != 0.0f) {
-//            path.addRoundRect(
-//                left,
-//                top,
-//                right,
-//                bottom,
-//                roundedCornerXRadius,
-//                roundedCornerYRadius,
-//                Path.Direction.CW
-//            )
-//        } else {
-//            path.addRect(
-//                left,
-//                top,
-//                right,
-//                bottom,
-//                Path.Direction.CW
-//            )
-//        }
-//        return path
-//    }
-
-    private fun calcBezierArc(cx: Float,
-                              cy: Float,
-                              sx: Float,
-                              sy: Float,
-                              sweepAngleDeg: Float): Array<Float> {
-        val leg1x = sx - cx
-        val leg1y = sy - cy
-        val theta1 = atan2(leg1y, leg1x)
-        val theta2 = theta1 + sweepAngleDeg * PI / 180f
-        val radius = sqrt(leg1x * leg1x + leg1y * leg1y)
-        val numSegments = 360f / sweepAngleDeg
-        val ctrlPtLen = radius * 4f / 3f * tan(PI / (2 * numSegments))
-        val cp3x = radius * cos(theta2) + cx
-        val cp3y = radius * sin(theta2) + cy
-        val ctrlPtAngle = atan2(ctrlPtLen, radius.toDouble())
-        val lenToCtrlPt = sqrt(radius * radius + ctrlPtLen * ctrlPtLen)
-        val cp1x = lenToCtrlPt * cos(theta1 + ctrlPtAngle) + cx
-        val cp1y = lenToCtrlPt * sin(theta1 + ctrlPtAngle) + cy
-        val cp2x = lenToCtrlPt * cos(theta2 - ctrlPtAngle) + cx
-        val cp2y = lenToCtrlPt * sin(theta2 - ctrlPtAngle) + cy
-        return arrayOf(cp1x.toFloat(),
-                       cp1y.toFloat(),
-                       cp2x.toFloat(),
-                       cp2y.toFloat(),
-                       cp3x.toFloat(),
-                       cp3y.toFloat())
-    }
-
-    private fun calcPointOnArc(cx: Float,
-                               cy: Float,
-                               radius: Float,
-                               distY: Float,
-                               quadrant: Int): Array<Float> {
-        val distX = sqrt(radius * radius - distY * distY)
-        var px = 0f
-        var py = 0f
-        when (quadrant) {
-            1 -> {
-                px = cx + distX
-                py = cy - distY
-            }
-            2 -> {
-                px = cx - distX
-                py = cy - distY
-            }
-            3 -> {
-                px = cx - distX
-                py = cy + distY
-            }
-            4 -> {
-                px = cx + distX
-                py = cy + distY
-            }
-        }
-        return arrayOf(px, py)
-    }
-
-    private fun generateSquare(cx: Float,
-                               cy: Float,
-                               sideDist: Float,
-                               rotation: Float,
-                               lineWidth: Float): Array<FloatArray> {
-        val points = arrayOf(floatArrayOf(-sideDist - lineWidth / 2, -sideDist),
-                             floatArrayOf(sideDist, -sideDist),
-                             floatArrayOf(sideDist, sideDist),
-                             floatArrayOf(-sideDist, sideDist),
-                             floatArrayOf(-sideDist, -sideDist - lineWidth / 2))
-        if (rotation != 0f) {
-            val theta = rotation * Math.PI / 180
-            for (point in points) {
-                val p1x = point[0] * cos(theta) + point[1] * sin(theta)
-                val p1y = point[0] * -sin(theta) + point[1] * cos(theta)
-                point[0] = p1x.toFloat()
-                point[1] = p1y.toFloat()
-            }
-        }
-        for (point in points) {
-            point[0] += cx
-            point[1] += cy
-        }
-        return points
     }
 
     private fun drawGrid(canvas: Canvas,
@@ -1437,94 +1010,7 @@ class AnalogWatchCanvasRenderer(
         canvas.drawText("TIDE", 0.035f * size, 0.38f * size, textPaint)
     }
 
-//    private fun drawNumberStyleOuterElement(
-//        canvas: Canvas,
-//        bounds: Rect,
-//        numberRadiusFraction: Float,
-//        outerCircleStokeWidthFraction: Float,
-//        outerElementColor: Int,
-//        standardFrameWidth: Float,
-//        gapBetweenOuterCircleAndBorderFraction: Float
-//    ) {
-//        // Draws text hour indicators (12, 3, 6, and 9).
-//        val textBounds = Rect()
-//        textPaint.color = outerElementColor
-//        for (i in 0 until 4) {
-//            val rotation = 0.5f * (i + 1).toFloat() * Math.PI
-//            val dx = sin(rotation).toFloat() * numberRadiusFraction * bounds.width().toFloat()
-//            val dy = -cos(rotation).toFloat() * numberRadiusFraction * bounds.width().toFloat()
-//            textPaint.getTextBounds(HOUR_MARKS[i], 0, HOUR_MARKS[i].length, textBounds)
-//            canvas.drawText(
-//                HOUR_MARKS[i],
-//                bounds.exactCenterX() + dx - textBounds.width() / 2.0f,
-//                bounds.exactCenterY() + dy + textBounds.height() / 2.0f,
-//                textPaint
-//            )
-//        }
-//        textPaint.color = watchFaceColors.activeFrameColor
-//        canvas.drawText("Next tide", 120.0f, 120.0f, textPaint)
-//        val arcBounds = RectF()
-//        arcBounds.bottom = 100f
-//        arcBounds.top = 60f
-//        arcBounds.left = 100f
-//        arcBounds.right = 150f
-//        canvas.drawArc(arcBounds, 30f, 140f, true, textPaint)
-//        arcBounds.left = 200f
-//        arcBounds.right = 210f
-//        canvas.drawArc(arcBounds, 30f, 140f, true, textPaint)
-//
-//        val tidePath = Path()
-//        tidePath.moveTo(80f, 150f)
-//        tidePath.cubicTo(100f, 150f, 100f, 130f, 120f, 130f)
-//        tidePath.lineTo(120f, 100f)
-//        tidePath.lineTo(80f, 100f)
-//        tidePath.lineTo(80f, 150f)
-//
-//        canvas.drawPath(tidePath, textPaint)
-//
-//        // Draws dots for the remain hour indicators between the numbers above.
-//        framePaint.strokeWidth = outerCircleStokeWidthFraction * bounds.width()
-//        framePaint.color = outerElementColor
-//        canvas.save()
-//        for (i in 0 until 12) {
-//            if (i % 3 != 0) {
-//                drawTopMiddleCircle(
-//                    canvas,
-//                    bounds,
-//                    standardFrameWidth,
-//                    gapBetweenOuterCircleAndBorderFraction
-//                )
-//            }
-//            canvas.rotate(360.0f / 12.0f, bounds.exactCenterX(), bounds.exactCenterY())
-//        }
-//        canvas.restore()
-//    }
-//
-//    /** Draws the outer circle on the top middle of the given bounds. */
-//    private fun drawTopMiddleCircle(
-//        canvas: Canvas,
-//        bounds: Rect,
-//        radiusFraction: Float,
-//        gapBetweenOuterCircleAndBorderFraction: Float
-//    ) {
-//        outerElementPaint.style = Paint.Style.FILL_AND_STROKE
-//
-//        // X and Y coordinates of the center of the circle.
-//        val centerX = 0.5f * bounds.width().toFloat()
-//        val centerY = bounds.width() * (gapBetweenOuterCircleAndBorderFraction + radiusFraction)
-//
-//        canvas.drawCircle(
-//            centerX,
-//            centerY,
-//            radiusFraction * bounds.width(),
-//            outerElementPaint
-//        )
-//    }
-
     companion object {
         private const val TAG = "AnalogWatchCanvasRenderer"
-
-        // Used to canvas.scale() to scale watch hands in proper bounds. This will always be 1.0.
-        private const val WATCH_HAND_SCALE = 1.0f
     }
 }

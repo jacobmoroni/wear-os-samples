@@ -21,7 +21,6 @@ import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.example.android.wearable.alpha.R
 import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
-import com.example.android.wearable.alpha.data.watchface.TideLocationResourceIds
 import com.example.android.wearable.alpha.data.watchface.LAT_MAX
 import com.example.android.wearable.alpha.data.watchface.LAT_MIN
 import com.example.android.wearable.alpha.data.watchface.LAT_DEFAULT

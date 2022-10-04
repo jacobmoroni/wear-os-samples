@@ -84,7 +84,7 @@ if __name__ == "__main__":
     tg = TideGrabber()
     if len(sys.argv) == 2 and sys.argv[1] == "auto":
         tide_spots = ["9410583", # Newport Beach, CA
-                      "TWC0419", # Oceanside, CA
+                      "TWC0419", # San Clemente, CA
                       "9410230", # La Jolla, CA
                       "8512354", # Long Island, NY
                       "8533071", # Seaside Heights, NJ

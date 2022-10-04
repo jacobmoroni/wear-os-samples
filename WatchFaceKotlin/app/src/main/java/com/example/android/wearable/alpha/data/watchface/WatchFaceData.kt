@@ -31,25 +31,31 @@ const val LOCATION_IDX_MIN = 0L
 const val LOCATION_IDX_MAX = 100L
 const val LOCATION_IDX_DEFAULT = 0L
 
-const val MAX_TIDE_DEFAULT = 6.0f
-const val MIN_TIDE_DEFAULT = -2.0f
+private const val STANDARD_FRAME_WIDTH_FRACTION = 0.00584f
 
-private const val SECOND_HAND_LENGTH_FRACTION = 0.37383f
-private const val SECOND_HAND_WIDTH_FRACTION = 0.00934f
 
-// Used for corner roundness of the arms.
-private const val ROUNDED_RECTANGLE_CORNERS_RADIUS = 1.5f
-private const val SQUARE_RECTANGLE_CORNERS_RADIUS = 0.0f
-
-private const val CENTER_CIRCLE_DIAMETER_FRACTION = 0.03738f
-private const val OUTER_CIRCLE_STROKE_WIDTH_FRACTION = 0.00467f
-private const val NUMBER_STYLE_OUTER_CIRCLE_RADIUS_FRACTION = 0.00584f
-
-private const val GAP_BETWEEN_OUTER_CIRCLE_AND_BORDER_FRACTION = 0.03738f
-private const val GAP_BETWEEN_HAND_AND_CENTER_FRACTION =
-    0.01869f + CENTER_CIRCLE_DIAMETER_FRACTION / 2.0f
-
-private const val NUMBER_RADIUS_FRACTION = 0.45f
+class TideRenderArea() {
+    var lowerLeftPx = floatArrayOf(0f, 0f)
+    var upperRightPx = floatArrayOf(0f, 0f)
+    var minHour = 0f
+    var maxHour = 0f
+    var minTide = 0f
+    var maxTide = 0f
+    var numHours = 0f
+    var hourUnit = 0f
+    var time0px = 0f
+    var numFeet = 0f
+    var footUnit = 0f
+    var tide0px = 0f
+    fun updateValues() {
+        numHours = maxHour - minHour
+        hourUnit = (upperRightPx[0] - lowerLeftPx[0]) / (numHours - 1)
+        time0px = lowerLeftPx[0] - minHour * hourUnit
+        numFeet = maxTide - minTide
+        footUnit = (upperRightPx[1] - lowerLeftPx[1]) / numFeet
+        tide0px = lowerLeftPx[1] - minTide * footUnit
+    }
+}
 
 /**
  * Represents all data needed to render an analog watch face.
@@ -63,13 +69,9 @@ data class WatchFaceData(
     var tideSpotIdx: Long = LOCATION_IDX_DEFAULT,
     var tideRegion: TideLocationResourceIds = TideLocationResourceIds.WEST_COAST,
     var tideSpot: Pair<String, String> = Pair("Newport Beach, CA", "9410583"),
-    val maxTide: Float = MAX_TIDE_DEFAULT,
-    val minTide: Float = MIN_TIDE_DEFAULT,
-    val centerCircleDiameterFraction: Float = CENTER_CIRCLE_DIAMETER_FRACTION,
-    val numberRadiusFraction: Float = NUMBER_RADIUS_FRACTION,
-    val outerCircleStokeWidthFraction: Float = OUTER_CIRCLE_STROKE_WIDTH_FRACTION,
-    val standardFrameWidth: Float = NUMBER_STYLE_OUTER_CIRCLE_RADIUS_FRACTION,
-    val gapBetweenOuterCircleAndBorderFraction: Float =
-        GAP_BETWEEN_OUTER_CIRCLE_AND_BORDER_FRACTION,
-    val gapBetweenHandAndCenterFraction: Float = GAP_BETWEEN_HAND_AND_CENTER_FRACTION
+    val tideArea: TideRenderArea = TideRenderArea(),
+    var sunriseTime: Float = 0f,
+    var sunsetTime: Float = 0f,
+    var moonPhase: Float = 0f,
+    val standardFrameWidth: Float = STANDARD_FRAME_WIDTH_FRACTION,
 )
