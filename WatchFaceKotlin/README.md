@@ -1,4 +1,4 @@
-WatchFace Sample (Kotlin)
+atchFace Sample (Kotlin)
 ===============================
 Demonstrates watch faces using the new androidX libraries (Kotlin).
 
@@ -49,3 +49,40 @@ https://github.com/android/wear-os-samples
 
 Patches are encouraged, and may be submitted by forking this project and
 submitting a pull request through GitHub. Please see CONTRIBUTING.md for more details.
+
+**How To Tips:
+- Connecting to the watch to run on there: 
+  
+  on the watch go in to developer settings and make sure `ADB debugging` is set to true. Then enable `Debug over Wi-Fi` (Leave this one turned off when not actively using it because it saps your battery) 
+
+  Then go into connection settings, click on wifi when you are connected to a network, click on it and scroll down to find the IP address of the watch
+  then you need to run the adb connect command in a terminal. the valid executable is stored by default in `~/Android/Sdk/platform-tools/adb` so to get this to run a bit easier. you can link this into /usr/bin/adb by doing this: 
+    ```
+    sudo ln -s ~/Android/Sdk/platform-tools/adb /usr/bin/adb
+    ```
+
+  After you run that, you will have to accept the connection on your watch. There is an option to always allow, that way in the future it will just connect.
+
+  Then you are good to run the app directly on your watch
+
+- Adding tides to watch: use `tide_grabber.py` located in `WatchFaceKotlin/app/src/main/assets`
+  This will print when run without any command line args:
+
+  ```
+  To run this script: python3 tide_grabber.py <Station ID> <year> or python3 tide_grabber.py auto
+  If 'auto' argument passed in, it will automatically load designated tides
+  Station ID can be found by visiting https://tidesandcurrents.noaa.gov/map/index.html?type=TidePredictions&region=, then selecting the desired location
+  Years available are the current year +/- 2 years
+  Example for Balboa Pier, Newport Beach 2023: python3 tide_grabber.py 9410583 2023
+  ```
+
+  To add an auto downloaded tide, just find the station id from the link above, then add it to the list that starts on line 86 of tide_grabber.py. 
+  
+  then run `tide_grabber.py auto`. This will download 5 years of tides for all the locations in that list and save them to the assets folder
+
+  You will also need to add information in the following places:
+
+  `TideLocationResourseIds.kt` just follow the current design scheme to add tides into this. This is the order that they will cycle through in the settings. So far I have organized it from north to south
+
+  I think that is it
+
